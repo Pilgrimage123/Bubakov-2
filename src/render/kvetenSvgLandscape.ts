@@ -17,6 +17,10 @@ import {
   KVETEN_STREAM_WAYPOINTS,
   KVETEN_POND_REGION,
 } from '../data/kvetenArena';
+import {
+  drawAuthenticRoubenka,
+  drawAllVillageCottages,
+} from './villageBuildingRenderer';
 
 function drawMayCottage(
   ctx: CanvasRenderingContext2D,
@@ -31,74 +35,14 @@ function drawMayCottage(
   isNight: boolean,
   label?: string
 ): void {
-  const ink = '#23170F';
-  const hw = w / 2;
-  const hh = h / 2;
-  ctx.save();
-  ctx.translate(cx, cy);
-
-  // Ground shadow
-  ctx.fillStyle = 'rgba(28, 20, 12, 0.18)';
-  ctx.beginPath();
-  ctx.ellipse(0, hh + 6, hw + 14, 16, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Main cottage walls
-  ctx.fillStyle = isNight ? '#CBD5E1' : wallColor;
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 3.5;
-  ctx.fillRect(-hw, -hh, w, h);
-  ctx.strokeRect(-hw, -hh, w, h);
-
-  // Door
-  ctx.fillStyle = '#5C3A21';
-  ctx.fillRect(-14, hh - 42, 28, 42);
-  ctx.strokeRect(-14, hh - 42, 28, 42);
-
-  // Windows with May flowerboxes
-  for (const wx of [-hw * 0.52, hw * 0.52]) {
-    ctx.fillStyle = isNight ? '#FEF08A' : '#38BDF8';
-    ctx.fillRect(wx - 13, -10, 26, 22);
-    ctx.strokeRect(wx - 13, -10, 26, 22);
-    // Red geranium flowerbox
-    ctx.fillStyle = '#15803D';
-    ctx.fillRect(wx - 15, 11, 30, 6);
-    ctx.strokeRect(wx - 15, 11, 30, 6);
-  }
-
-  // Shingled trapezoid roof
-  ctx.fillStyle = roofColor;
-  ctx.beginPath();
-  ctx.moveTo(-hw - 14, -hh + 3);
-  ctx.lineTo(-hw * 0.45, -hh - roofH);
-  ctx.lineTo(hw * 0.55, -hh - roofH);
-  ctx.lineTo(hw + 14, -hh + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Folk gable
-  ctx.fillStyle = gableColor;
-  ctx.beginPath();
-  ctx.moveTo(-hw - 8, -hh + 3);
-  ctx.lineTo(-hw * 0.45, -hh - roofH);
-  ctx.lineTo(0, -hh + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  if (label) {
-    ctx.fillStyle = '#FEF3C7';
-    ctx.fillRect(-44, -hh - 14, 88, 20);
-    ctx.strokeRect(-44, -hh - 14, 88, 20);
-    ctx.fillStyle = ink;
-    ctx.font = 'bold 12px Eczar, Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, 0, -hh - 4);
-  }
-
-  ctx.restore();
+  drawAuthenticRoubenka(ctx, cx, cy, w, h, roofH, {
+    wallColor,
+    roofColor,
+    gableColor,
+    isNight,
+    label,
+    season: 'spring',
+  });
 }
 
 export function drawKvetenMayLandmark(
@@ -170,11 +114,8 @@ export function drawKvetenMayLandmark(
       ctx.restore();
     }
 
-    // 0d. Village cottages matching KVETEN_OBSTACLES & MARCH_COTTAGE_ROOF_SPECS
-    drawMayCottage(ctx, -350, -362, 250, 138, 112, '#FAF3E0', '#9E3D26', '#D9A55B', isNight);
-    drawMayCottage(ctx, 100, -412, 262, 144, 115, '#FAF3E0', '#C84B31', '#D9A55B', isNight);
-    drawMayCottage(ctx, -375, -75, 238, 138, 110, '#FAF3E0', '#8C3B2B', '#D9A55B', isNight);
-    drawMayCottage(ctx, -275, 200, 250, 138, 112, '#FAF3E0', '#B84A32', '#D9A55B', isNight);
+    // 0d. Village cottages matching KVETEN_OBSTACLES & MARCH_COTTAGE_ROOF_SPECS (all 6 cottages)
+    drawAllVillageCottages(ctx, 'spring', isNight, time);
 
     // 1. Physical and folk boundary at [-1920..1920, -1675..1675]
     ctx.strokeStyle = ink;

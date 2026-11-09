@@ -7,6 +7,13 @@
  */
 
 const INK = '#1A1412';
+import {
+  drawAllVillageCottages,
+  drawAuthenticChurch,
+  drawAuthenticTavern,
+  drawAuthenticSchool,
+  drawAuthenticMill,
+} from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -82,10 +89,12 @@ export function drawProsinecDecoration(
 ) {
   const isObj = typeof itemOrType === 'object' && itemOrType !== null;
   const type = isObj ? itemOrType.type : itemOrType;
-  const x = isObj ? 0 : timeOrX;
+  const x = isObj ? 0 : (typeof timeOrX === 'number' && typeof isNightOrY === 'number' ? timeOrX : 0);
   const y = isObj ? 0 : (typeof isNightOrY === 'number' ? isNightOrY : 0);
-  const time = isObj ? timeOrX : maybeTime;
-  const isNight = isObj ? Boolean(isNightOrY) : maybeIsNight;
+  const time = isObj ? timeOrX : (typeof timeOrX === 'number' && typeof isNightOrY === 'boolean' ? timeOrX : maybeTime);
+  const isNight = isObj
+    ? Boolean(isNightOrY)
+    : (typeof isNightOrY === 'boolean' ? isNightOrY : (typeof timeOrX === 'boolean' ? timeOrX : maybeIsNight));
 
   ctx.save();
   if (x !== 0 || y !== 0) {
@@ -159,7 +168,11 @@ export function drawProsinecDecoration(
       ctx.strokeStyle = INK;
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.roundRect(-240, -1630, 480, 56, 12);
+      if (typeof (ctx as any).roundRect === 'function') {
+        (ctx as any).roundRect(-240, -1630, 480, 56, 12);
+      } else {
+        ctx.rect(-240, -1630, 480, 56);
+      }
       ctx.fill();
       ctx.stroke();
 
@@ -167,7 +180,10 @@ export function drawProsinecDecoration(
       ctx.font = 'bold 22px "Cinzel", Georgia, serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(isNight ? 'ŠTĚDROVEČERNÍ NOC V HRUSICÍCH' : 'MIKULÁŠSKÁ OBCHŮZKA V HRUSICÍCH', 0, -1602);
+      ctx.fillText(isNight ? '✦ PROSINEC V HRUSICÍCH – ŠTĚDROVEČERNÍ NOC ✦' : '✦ PROSINEC V HRUSICÍCH – MIKULÁŠSKÝ ADVENT ✦', 0, -1602);
+
+      // Canonical 6 village cottages with thick winter snow cushions
+      drawAllVillageCottages(ctx, 'winter', isNight, time);
 
       ctx.restore();
       break;
@@ -191,58 +207,8 @@ export function drawProsinecDecoration(
 
     case 'prosinec_church': {
       ctx.save();
-      // Church of St. Nicholas with snowy roof and bell tower (Interactive POI)
-      ctx.fillStyle = isNight ? '#1E293B' : '#E2E8F0';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(-45, -35, 90, 70, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      // Steeple with thick snow cover
-      ctx.fillStyle = isNight ? '#0F172A' : '#64748B';
-      ctx.beginPath();
-      ctx.moveTo(-35, -35);
-      ctx.lineTo(0, -95);
-      ctx.lineTo(35, -35);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Snow on steeple
-      ctx.fillStyle = isNight ? '#94A3B8' : '#FFFFFF';
-      ctx.beginPath();
-      ctx.moveTo(-20, -60);
-      ctx.lineTo(0, -95);
-      ctx.lineTo(20, -60);
-      ctx.closePath();
-      ctx.fill();
-
-      // Big Christmas Bell inside the open arch
-      ctx.fillStyle = '#F59E0B';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(0, -12, 10, Math.PI, 0);
-      ctx.lineTo(12, 2);
-      ctx.lineTo(-12, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Clapper
-      ctx.fillStyle = '#78350F';
-      ctx.beginPath();
-      ctx.arc(0, 5, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Golden St. Nicholas Star on top
-      ctx.fillStyle = '#FDE047';
-      ctx.beginPath();
-      ctx.arc(0, -102, 6, 0, Math.PI * 2);
-      ctx.fill();
-
+      // Complete Church of St. Nicholas with snowy roof and bell tower
+      drawAuthenticChurch(ctx, 0, -30, isNight, 'winter', time);
       drawWinterPine(ctx, 65, 15, 1.05, isNight);
       ctx.restore();
       break;
@@ -299,88 +265,16 @@ export function drawProsinecDecoration(
 
     case 'prosinec_tavern': {
       ctx.save();
-      // Warm tavern U Sejků with smoke from chimney and snow on roof
-      ctx.fillStyle = isNight ? '#1C1917' : '#FDE68A';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(-60, -40, 120, 80, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Red roof with snow cushion
-      ctx.fillStyle = '#991B1B';
-      ctx.beginPath();
-      ctx.moveTo(-70, -40);
-      ctx.lineTo(0, -85);
-      ctx.lineTo(70, -40);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Snow on roof
-      ctx.fillStyle = isNight ? '#E2E8F0' : '#FFFFFF';
-      ctx.beginPath();
-      ctx.moveTo(-74, -40);
-      ctx.quadraticCurveTo(0, -96, 74, -40);
-      ctx.lineTo(65, -34);
-      ctx.quadraticCurveTo(0, -80, -65, -34);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 2.5);
-
-      // Glowing golden windows
-      ctx.fillStyle = '#FBBF24';
-      ctx.fillRect(-45, -20, 22, 22);
-      ctx.fillRect(25, -20, 22, 22);
-      strokeOutline(ctx, 2);
-
-      // Chimney with cozy woodsmoke
-      ctx.fillStyle = '#78350F';
-      ctx.fillRect(32, -90, 14, 20);
-      strokeOutline(ctx, 2.5);
-
-      const smokeWobble = Math.sin(time * 3) * 6;
-      ctx.strokeStyle = isNight ? 'rgba(241, 245, 249, 0.55)' : 'rgba(148, 163, 184, 0.45)';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(39, -92);
-      ctx.quadraticCurveTo(39 + smokeWobble, -115, 45, -135);
-      ctx.stroke();
+      // Complete tavern matching hospoda_main collision
+      drawAuthenticTavern(ctx, 22, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }
 
     case 'prosinec_school': {
       ctx.save();
-      // Village school with frost flowers on glass
-      ctx.fillStyle = isNight ? '#1E293B' : '#FEF3C7';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.roundRect(-50, -35, 100, 70, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = isNight ? '#334155' : '#B45309';
-      ctx.beginPath();
-      ctx.moveTo(-58, -35);
-      ctx.lineTo(0, -75);
-      ctx.lineTo(58, -35);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Snow blanket on school roof
-      ctx.fillStyle = isNight ? '#E2E8F0' : '#FFFFFF';
-      ctx.beginPath();
-      ctx.moveTo(-62, -35);
-      ctx.quadraticCurveTo(0, -85, 62, -35);
-      ctx.lineTo(52, -30);
-      ctx.quadraticCurveTo(0, -70, -52, -30);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 2);
+      // Complete school matching skola_main collision
+      drawAuthenticSchool(ctx, -6, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }
@@ -409,32 +303,8 @@ export function drawProsinecDecoration(
 
     case 'prosinec_mill': {
       ctx.save();
-      // Mill with frozen icicles hanging from waterwheel
-      ctx.fillStyle = isNight ? '#1C1917' : '#78350F';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.roundRect(-45, -30, 90, 60, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Frozen Wheel
-      ctx.strokeStyle = '#451A03';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(-55, 10, 24, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Sharp icicles hanging from the roof
-      ctx.fillStyle = '#BAE6FD';
-      for (let ix = -40; ix <= 40; ix += 10) {
-        ctx.beginPath();
-        ctx.moveTo(ix, -30);
-        ctx.lineTo(ix + 4, -30);
-        ctx.lineTo(ix + 2, -18);
-        ctx.closePath();
-        ctx.fill();
-      }
+      // Complete mill matching mlyn_house collision
+      drawAuthenticMill(ctx, 0, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }

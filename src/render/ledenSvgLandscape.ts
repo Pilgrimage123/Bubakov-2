@@ -7,6 +7,13 @@
  */
 
 const INK = '#1A1412';
+import {
+  drawAllVillageCottages,
+  drawAuthenticChurch,
+  drawAuthenticTavern,
+  drawAuthenticSchool,
+  drawAuthenticMill,
+} from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -222,6 +229,28 @@ export function drawLedenDecorItem(
       ctx.lineTo(1200, -880);
       ctx.stroke();
 
+      // Title Cartouche top center
+      ctx.fillStyle = isNight ? '#0F172A' : '#F8FAFC';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      if (typeof (ctx as any).roundRect === 'function') {
+        (ctx as any).roundRect(-240, -1630, 480, 56, 12);
+      } else {
+        ctx.rect(-240, -1630, 480, 56);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = isNight ? '#F8FAFC' : '#0F172A';
+      ctx.font = 'bold 22px "Cinzel", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isNight ? '✦ LEDEN V HRUSICÍCH – MRAZIVÁ TŘÍKRÁLOVÁ NOC ✦' : '✦ LEDEN V HRUSICÍCH – TŘÍKRÁLOVÁ KOLEDA ✦', 0, -1602);
+
+      // Canonical 6 village cottages with winter snow cushions
+      drawAllVillageCottages(ctx, 'winter', isNight, time);
+
       ctx.restore();
       break;
     }
@@ -254,67 +283,8 @@ export function drawLedenDecorItem(
 
     case 'leden_church': {
       ctx.save();
-      // Parsonage & Church with sacred K+M+B inscription above wooden door
-      ctx.fillStyle = isNight ? '#1E293B' : '#FEF3C7';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      if (typeof (ctx as any).roundRect === 'function') {
-        (ctx as any).roundRect(-65, -45, 130, 90, 6);
-      } else {
-        ctx.rect(-65, -45, 130, 90);
-      }
-      ctx.fill();
-      ctx.stroke();
-
-      // Church Tower
-      ctx.fillStyle = isNight ? '#0F172A' : '#FDE68A';
-      ctx.beginPath();
-      if (typeof (ctx as any).roundRect === 'function') {
-        (ctx as any).roundRect(-30, -125, 60, 85, 4);
-      } else {
-        ctx.rect(-30, -125, 60, 85);
-      }
-      ctx.fill();
-      ctx.stroke();
-
-      // Steeple Roof with Snow
-      ctx.fillStyle = '#991B1B';
-      ctx.beginPath();
-      ctx.moveTo(-35, -125);
-      ctx.lineTo(0, -185);
-      ctx.lineTo(35, -125);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Snow cap on steeple
-      ctx.fillStyle = isNight ? '#E2E8F0' : '#FFFFFF';
-      ctx.beginPath();
-      ctx.moveTo(-38, -125);
-      ctx.quadraticCurveTo(0, -195, 38, -125);
-      ctx.lineTo(30, -120);
-      ctx.quadraticCurveTo(0, -180, -30, -120);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 2.5);
-
-      // Wooden Arched Doorway with K+M+B chalk inscription
-      ctx.fillStyle = '#78350F';
-      ctx.beginPath();
-      ctx.arc(0, 15, 18, Math.PI, 0);
-      ctx.lineTo(18, 45);
-      ctx.lineTo(-18, 45);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 2.5);
-
-      // Glowing Holy Chalk K+M+B Letters
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 9px serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('K + M + B', 0, 8);
-
+      // Complete Church matching kostel_nave & tower
+      drawAuthenticChurch(ctx, 0, -30, isNight, 'winter', time);
       ctx.restore();
       break;
     }
@@ -388,35 +358,16 @@ export function drawLedenDecorItem(
 
     case 'leden_tavern': {
       ctx.save();
-      drawWinterRoubenka(ctx, 0, 0, 110, 75, isNight);
-
-      // Cozy smoking chimney
-      ctx.fillStyle = '#78350F';
-      ctx.fillRect(28, -75, 14, 20);
-      strokeOutline(ctx, 2.5);
-
-      const smokeWobble = Math.sin(time * 3) * 6;
-      ctx.strokeStyle = isNight ? 'rgba(241, 245, 249, 0.55)' : 'rgba(148, 163, 184, 0.45)';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(35, -77);
-      ctx.quadraticCurveTo(35 + smokeWobble, -100, 42, -120);
-      ctx.stroke();
-
+      // Complete tavern matching hospoda_main collision
+      drawAuthenticTavern(ctx, 22, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }
 
     case 'leden_school': {
       ctx.save();
-      drawWinterRoubenka(ctx, 0, 0, 100, 70, isNight);
-
-      // Star of Bethlehem above entrance
-      ctx.fillStyle = '#FACC15';
-      ctx.beginPath();
-      ctx.arc(0, -28, 6, 0, Math.PI * 2);
-      ctx.fill();
-      strokeOutline(ctx, 1.5);
+      // Complete school matching skola_main collision
+      drawAuthenticSchool(ctx, -6, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }
@@ -445,36 +396,8 @@ export function drawLedenDecorItem(
 
     case 'leden_mill': {
       ctx.save();
-      // Mill with frozen icicles hanging from waterwheel
-      ctx.fillStyle = isNight ? '#1C1917' : '#78350F';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      if (typeof (ctx as any).roundRect === 'function') {
-        (ctx as any).roundRect(-45, -30, 90, 60, 4);
-      } else {
-        ctx.rect(-45, -30, 90, 60);
-      }
-      ctx.fill();
-      ctx.stroke();
-
-      // Frozen Wheel
-      ctx.strokeStyle = '#451A03';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(-55, 10, 24, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Icicles
-      ctx.fillStyle = '#BAE6FD';
-      for (let ix = -40; ix <= 40; ix += 10) {
-        ctx.beginPath();
-        ctx.moveTo(ix, -30);
-        ctx.lineTo(ix + 4, -30);
-        ctx.lineTo(ix + 2, -18);
-        ctx.closePath();
-        ctx.fill();
-      }
+      // Complete mill matching mlyn_house collision
+      drawAuthenticMill(ctx, 0, 0, isNight, 'winter', time);
       ctx.restore();
       break;
     }
@@ -525,10 +448,16 @@ export function drawLedenDecorItem(
 export function drawLedenDecoration(
   ctx: CanvasRenderingContext2D,
   decor: { type: string; x: number; y: number; scale?: number } | string,
-  _timeOrScale: number = 0,
-  isNight = false,
-  time = 0
+  timeOrNightOrScale: number | boolean = 0,
+  isNightOrTime: boolean | number = false,
+  maybeTime = 0
 ): void {
   const item = typeof decor === 'string' ? { type: decor, x: 0, y: 0 } : decor;
-  drawLedenDecorItem(ctx, item, typeof isNight === 'boolean' ? isNight : false, time);
+  const isNight = typeof timeOrNightOrScale === 'boolean'
+    ? timeOrNightOrScale
+    : (typeof isNightOrTime === 'boolean' ? isNightOrTime : false);
+  const time = typeof timeOrNightOrScale === 'number'
+    ? timeOrNightOrScale
+    : (typeof isNightOrTime === 'number' ? isNightOrTime : maybeTime);
+  drawLedenDecorItem(ctx, item, isNight, time);
 }

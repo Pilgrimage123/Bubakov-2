@@ -466,7 +466,7 @@ export function resolveRijenObstacles(
   entity: { x: number; y: number; radius?: number; isFlying?: boolean },
   allowFlyingBypass: boolean | number = true
 ): boolean {
-  if (typeof allowFlyingBypass === 'boolean' && allowFlyingBypass && entity.isFlying) return false;
+  if (allowFlyingBypass !== false && entity.isFlying) return false;
   const r = typeof allowFlyingBypass === 'number' ? allowFlyingBypass : entity.radius || 18;
   let anyHit = false;
   for (let pass = 0; pass < 2; pass++) {

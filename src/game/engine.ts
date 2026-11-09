@@ -8539,56 +8539,96 @@ export class GameEngine {
         if (d.isObstacle) {
           // Push player
           if (player && player.hp > 0) {
-            const dx = player.x - d.x;
-            const dy = player.y - d.y;
-            const dist = Math.hypot(dx, dy);
-            const reach = player.radius + d.radius;
-            if (dist < reach) {
-              const overlap = reach - dist;
-              if (dist > 0.001) {
-                player.x += (dx / dist) * overlap;
-                player.y += (dy / dist) * overlap;
+            if (d.halfW && d.halfH) {
+              const hw = d.halfW + player.radius;
+              const hh = d.halfH + player.radius;
+              const dx = player.x - d.x;
+              const dy = player.y - d.y;
+              if (Math.abs(dx) < hw && Math.abs(dy) < hh) {
+                const ox = hw - Math.abs(dx);
+                const oy = hh - Math.abs(dy);
+                if (ox < oy) {
+                  player.x += (dx > 0 ? ox : -ox);
+                } else {
+                  player.y += (dy > 0 ? oy : -oy);
+                }
+                if (d.type === 'granny_stove' && Math.random() < 0.05) {
+                  player.hp = Math.min(player.maxHp || 100, player.hp + 2);
+                }
               }
-              if (d.type === 'granny_stove' && Math.random() < 0.05) {
-                player.hp = Math.min(player.maxHp || 100, player.hp + 2);
-              }
-              if (d.type === 'kaca' && dist < reach - 2) {
-                // Player kicks the top!
-                d.vx = (dx / dist) * -300;
-                d.vy = (dy / dist) * -300;
+            } else {
+              const dx = player.x - d.x;
+              const dy = player.y - d.y;
+              const dist = Math.hypot(dx, dy);
+              const reach = player.radius + d.radius;
+              if (dist < reach) {
+                const overlap = reach - dist;
+                if (dist > 0.001) {
+                  player.x += (dx / dist) * overlap;
+                  player.y += (dy / dist) * overlap;
+                }
+                if (d.type === 'granny_stove' && Math.random() < 0.05) {
+                  player.hp = Math.min(player.maxHp || 100, player.hp + 2);
+                }
+                if (d.type === 'kaca' && dist < reach - 2) {
+                  // Player kicks the top!
+                  d.vx = (dx / dist) * -300;
+                  d.vy = (dy / dist) * -300;
+                }
               }
             }
           }
           // Push enemies (spatial hash lookup avoids O(decor * enemies) quadratic bottleneck)
-          const obstRadius = d.radius + 35;
+          const obstDim = d.halfW ? Math.max(d.halfW, d.halfH || 0) : d.radius;
+          const obstRadius = obstDim + 35;
           const nearbyEnemies = this.spatialHash.queryRadius(d.x, d.y, obstRadius);
           for (let j = 0; j < nearbyEnemies.length; j++) {
             const e = nearbyEnemies[j];
-            const edx = e.x - d.x;
-            const edy = e.y - d.y;
-            const ereach = (e.radius || 15) + d.radius;
-            if (edx >= ereach || edx <= -ereach || edy >= ereach || edy <= -ereach) continue;
-            const edistSq = edx * edx + edy * edy;
-            if (edistSq < ereach * ereach) {
-              const edist = Math.sqrt(edistSq);
-              const eoverlap = ereach - edist;
-              if (edist > 0.001) {
-                e.x += (edx / edist) * eoverlap;
-                e.y += (edy / edist) * eoverlap;
-              }
-              if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
-                if (typeof e.takeDamage === 'function') {
-                  e.takeDamage(20, 'physical', 0, 0);
+            const isFlying = Boolean((e.isFlying || e.id === 'vrana' || e.id === 'mraziva_sova' || e.id === 'jezdec_meluziny' || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak') && !e.isGroundedForLoot);
+            if (isFlying) continue;
+
+            if (d.halfW && d.halfH) {
+              const er = e.radius || 15;
+              const hw = d.halfW + er;
+              const hh = d.halfH + er;
+              const edx = e.x - d.x;
+              const edy = e.y - d.y;
+              if (Math.abs(edx) < hw && Math.abs(edy) < hh) {
+                const ox = hw - Math.abs(edx);
+                const oy = hh - Math.abs(edy);
+                if (ox < oy) {
+                  e.x += (edx > 0 ? ox : -ox);
                 } else {
-                  e.hp -= 20;
-                  if (e.hp <= 0) e.isDefeated = true;
+                  e.y += (edy > 0 ? oy : -oy);
                 }
-                d.vx = (edx / edist) * -200;
-                d.vy = (edy / edist) * -200;
-              } else if (d.type === 'kaca') {
-                // Enemy kicks the top
-                d.vx = (edx / edist) * -150;
-                d.vy = (edy / edist) * -150;
+              }
+            } else {
+              const edx = e.x - d.x;
+              const edy = e.y - d.y;
+              const ereach = (e.radius || 15) + d.radius;
+              if (edx >= ereach || edx <= -ereach || edy >= ereach || edy <= -ereach) continue;
+              const edistSq = edx * edx + edy * edy;
+              if (edistSq < ereach * ereach) {
+                const edist = Math.sqrt(edistSq);
+                const eoverlap = ereach - edist;
+                if (edist > 0.001) {
+                  e.x += (edx / edist) * eoverlap;
+                  e.y += (edy / edist) * eoverlap;
+                }
+                if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
+                  if (typeof e.takeDamage === 'function') {
+                    e.takeDamage(20, 'physical', 0, 0);
+                  } else {
+                    e.hp -= 20;
+                    if (e.hp <= 0) e.isDefeated = true;
+                  }
+                  d.vx = (edx / edist) * -200;
+                  d.vy = (edy / edist) * -200;
+                } else if (d.type === 'kaca') {
+                  // Enemy kicks the top
+                  d.vx = (edx / edist) * -150;
+                  d.vy = (edy / edist) * -150;
+                }
               }
             }
           }
@@ -10322,8 +10362,8 @@ export class GameEngine {
           if (eWater.inOpenWater && !isAquaticEnemy(e)) {
             e.slowTimer = Math.max(e.slowTimer || 0, 0.4);
           }
+          resolveListopadObstacles(e, 22);
         }
-        resolveListopadObstacles(e, 22);
         clampToMarchArenaBounds(e, 28);
       }
     }
@@ -10435,7 +10475,9 @@ export class GameEngine {
       for (let j = 0; j < this.livingEnemies.length; j++) {
         const e = this.livingEnemies[j];
         const isFlying = Boolean((e.isFlying || e.id === 'mraziva_sova' || e.id === 'jezdec_meluziny' || e.id === 'vrana') && !e.isGroundedForLoot);
-        resolveProsinecObstacles(e, 22);
+        if (!isFlying) {
+          resolveProsinecObstacles(e, 22);
+        }
         clampToMarchArenaBounds(e, 28);
       }
     }
@@ -10541,7 +10583,10 @@ export class GameEngine {
 
       for (let j = 0; j < this.livingEnemies.length; j++) {
         const e = this.livingEnemies[j];
-        resolveLedenObstacles(e, 22);
+        const isFlying = Boolean((e.isFlying || e.id === 'mraziva_sova' || e.id === 'jezdec_meluziny' || e.id === 'vrana') && !e.isGroundedForLoot);
+        if (!isFlying) {
+          resolveLedenObstacles(e, 22);
+        }
         clampToMarchArenaBounds(e, 28);
       }
     }
@@ -10634,7 +10679,10 @@ export class GameEngine {
 
       for (let j = 0; j < this.livingEnemies.length; j++) {
         const e = this.livingEnemies[j];
-        resolveUnorObstacles(e, 22);
+        const isFlying = Boolean((e.isFlying || e.id === 'vrana') && !e.isGroundedForLoot);
+        if (!isFlying) {
+          resolveUnorObstacles(e, 22);
+        }
         clampToMarchArenaBounds(e, 28);
       }
     }

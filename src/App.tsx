@@ -266,6 +266,10 @@ import { drawProsinecDecoration } from './render/prosinecSvgLandscape';
 import { drawLedenDecorItem as drawLedenDecoration } from './render/ledenSvgLandscape';
 import { drawUnorDecorItem as drawUnorDecoration } from './render/unorSvgLandscape';
 import {
+  drawAuthenticRoubenka,
+  drawAuthenticChurch,
+} from './render/villageBuildingRenderer';
+import {
   CERVENEC_POIS,
   CERVENEC_DECOR,
   getCervenecPois,
@@ -1022,7 +1026,7 @@ function drawMarchThawLandmark(ctx: CanvasRenderingContext2D, type: string, time
 }
 
 // Environmental decor item (tombstone, cross, tree, snowman, cottage)
-class DecorItem {
+export class DecorItem {
   x: number;
   y: number;
   type: string;
@@ -1030,6 +1034,8 @@ class DecorItem {
   flip: number;
   isObstacle: boolean;
   radius: number;
+  halfW?: number;
+  halfH?: number;
   vx: number;
   vy: number;
   animTime: number;
@@ -1045,21 +1051,59 @@ class DecorItem {
     this.vy = 0;
     this.animTime = Math.random() * 100;
 
+    const s = Math.abs(scale) || 1;
     if (type === 'cottage') {
       this.isObstacle = true;
-      this.radius = 45;
+      this.halfW = 55 * s;
+      this.halfH = 35 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type === 'church') {
+      this.isObstacle = true;
+      this.halfW = 60 * s;
+      this.halfH = 45 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
     } else if (type === 'rock') {
       this.isObstacle = true;
-      this.radius = 25;
+      this.radius = 25 * s;
     } else if (type === 'ice_floe') {
       this.isObstacle = false;
-      this.radius = 32;
+      this.radius = 32 * s;
     } else if (type === 'granny_stove') {
       this.isObstacle = true;
-      this.radius = 35;
+      this.radius = 35 * s;
     } else if (type === 'kaca') {
       this.isObstacle = true;
-      this.radius = 12;
+      this.radius = 12 * s;
+    } else if (type.endsWith('_church')) {
+      this.isObstacle = true;
+      this.halfW = 65 * s;
+      this.halfH = 45 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type.endsWith('_tavern')) {
+      this.isObstacle = true;
+      this.halfW = 75 * s;
+      this.halfH = 40 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type.endsWith('_school')) {
+      this.isObstacle = true;
+      this.halfW = 75 * s;
+      this.halfH = 38 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type.endsWith('_mill')) {
+      this.isObstacle = true;
+      this.halfW = 68 * s;
+      this.halfH = 38 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type.endsWith('_village_cottage') || type.endsWith('_cottage')) {
+      this.isObstacle = true;
+      this.halfW = 55 * s;
+      this.halfH = 35 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
+    } else if (type.endsWith('_granary')) {
+      this.isObstacle = true;
+      this.halfW = 40 * s;
+      this.halfH = 30 * s;
+      this.radius = Math.hypot(this.halfW, this.halfH);
     } else {
       this.isObstacle = false;
       this.radius = 0;
@@ -1260,49 +1304,16 @@ class DecorItem {
       ctx.arc(0, -25 + bob, 5, 0, Math.PI * 2);
       ctx.fill();
     } else if (this.type === 'cottage') {
-      // Daylight cast ink shadow behind cottage
-      if (!isNight) {
-        drawArchitecturalSunShadow(ctx, 0, 10, 56, 35);
-      }
-
-      // Cottage wooden logs body
-      Lada.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3.5);
-      ctx.fillRect(-28, -25, 56, 35);
-      ctx.strokeRect(-28, -25, 56, 35);
-
-      // Horizontal log lines
-      ctx.strokeStyle = COLORS.woodLight;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(-26, -14); ctx.lineTo(26, -14);
-      ctx.moveTo(-26, -4); ctx.lineTo(26, -4);
-      ctx.stroke();
-
-      // Multi-pane cozy window
-      const windowFill = isNight ? '#FEF08A' : '#78350F';
-      Lada.setupPath(ctx, windowFill, COLORS.ink, 2);
-      ctx.fillRect(-8, -15, 16, 13);
-      ctx.strokeRect(-8, -15, 16, 13);
-      // Window mullions (cross)
-      ctx.beginPath();
-      ctx.moveTo(0, -15); ctx.lineTo(0, -2);
-      ctx.moveTo(-8, -8.5); ctx.lineTo(8, -8.5);
-      ctx.stroke();
-
-      // Snow roof
-      Lada.setupPath(ctx, '#F8FAFC', COLORS.ink, 4);
-      ctx.beginPath();
-      ctx.moveTo(-36, -22);
-      ctx.quadraticCurveTo(-15, -45, 0, -48);
-      ctx.quadraticCurveTo(15, -45, 36, -22);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // At night, cast butter-yellow trapezoid onto snowbank
-      if (isNight) {
-        drawCottageWindowLight(ctx, 0, 10, 1, 1, time);
-      }
+      drawAuthenticRoubenka(ctx, 0, 0, 100, 64, 52, {
+        season,
+        isNight,
+        time,
+        roofType: season === 'winter' ? 'snow' : 'shingle',
+        chimney: 'right',
+        wallStyle: 'timber',
+      });
+    } else if (this.type === 'church') {
+      drawAuthenticChurch(ctx, 0, 0, isNight, season, time);
     } else if (this.type === 'bozi_muka') {
       drawBoziMukaDecor(ctx, 0, 0, 1, time, isNight);
     } else if (this.type === 'rock') {

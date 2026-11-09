@@ -14,6 +14,7 @@
  */
 
 import { drawSummerCottage } from './cervenSvgLandscape';
+import { drawAllVillageCottages } from './villageBuildingRenderer';
 import {
   CERVENEC_SHEAF_OBSTACLES,
   CERVENEC_STREAM_WAYPOINTS,
@@ -328,11 +329,8 @@ export function drawCervenecSummerLandmark(
       ctx.restore();
     }
 
-    // 0d. Four village cottages matching physical obstacle footprints
-    drawSummerCottage(ctx, -350, -362, 250, 138, 112, '#FAF3E0', '#9E3D26', '#D9A55B', isNight);
-    drawSummerCottage(ctx, 100, -412, 262, 144, 115, '#FAF3E0', '#C84B31', '#D9A55B', isNight);
-    drawSummerCottage(ctx, -375, -75, 238, 138, 110, '#FAF3E0', '#8C3B2B', '#D9A55B', isNight);
-    drawSummerCottage(ctx, -275, 200, 250, 138, 112, '#FAF3E0', '#B84A32', '#D9A55B', isNight);
+    // 0d. Village cottages matching physical obstacle footprints (all 6 cottages)
+    drawAllVillageCottages(ctx, 'summer', isNight, time);
 
     // 1. Physical and folk boundary at [-1920..1920, -1675..1675]
     ctx.strokeStyle = INK;

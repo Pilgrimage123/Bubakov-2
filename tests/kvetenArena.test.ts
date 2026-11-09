@@ -114,6 +114,7 @@ describe('Level 5: Květen v Hrusicích (Arena Geometry & May Motifs)', () => {
       stroke: () => {},
       fillRect: () => {},
       strokeRect: () => {},
+      rect: () => {},
       fillText: () => {},
       strokeText: () => {},
     };

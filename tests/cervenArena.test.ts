@@ -124,6 +124,7 @@ describe('Level 7: Červen v Hrusicích (Arena Geometry & June Harvest Motifs)',
       stroke: () => {},
       fillRect: () => {},
       strokeRect: () => {},
+      rect: () => {},
       fillText: () => {},
       strokeText: () => {},
     };

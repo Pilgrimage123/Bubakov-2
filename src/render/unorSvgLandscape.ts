@@ -7,6 +7,13 @@
  */
 
 const INK = '#1A1412';
+import {
+  drawAllVillageCottages,
+  drawAuthenticChurch,
+  drawAuthenticTavern,
+  drawAuthenticSchool,
+  drawAuthenticMill,
+} from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -446,6 +453,28 @@ function drawCarnivalBorder(
   ctx.lineWidth = 4;
   ctx.strokeRect(-1585, -1585, 3170, 3170);
 
+  // Title Cartouche top center
+  ctx.fillStyle = _isNight ? '#0F172A' : '#F8FAFC';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(-240, -1630, 480, 56, 12);
+  } else {
+    ctx.rect(-240, -1630, 480, 56);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = _isNight ? '#F8FAFC' : '#0F172A';
+  ctx.font = 'bold 22px "Cinzel", Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(_isNight ? '✦ ÚNOR V HRUSICÍCH – POCHOVÁVÁNÍ BASY ✦' : '✦ ÚNOR V HRUSICÍCH – MASOPUSTNÍ PRŮVOD ✦', 0, -1602);
+
+  // Canonical 6 village cottages with winter snow cushions
+  drawAllVillageCottages(ctx, 'winter', _isNight, 0);
+
   ctx.restore();
 }
 
@@ -489,7 +518,7 @@ export function drawUnorDecorItem(
     }
 
     case 'unor_church':
-      drawCarnivalChurchAndMortuary(ctx, 0, 0, isNight);
+      drawAuthenticChurch(ctx, 0, -30, isNight, 'winter', _time);
       break;
 
     case 'unor_village': {
@@ -509,7 +538,7 @@ export function drawUnorDecorItem(
     }
 
     case 'unor_tavern':
-      drawCarnivalTavern(ctx, 0, 0, isNight);
+      drawAuthenticTavern(ctx, 22, 0, isNight, 'winter', _time);
       break;
 
     case 'unor_pond':
@@ -518,15 +547,7 @@ export function drawUnorDecorItem(
 
     case 'unor_mill': {
       ctx.save();
-      // Timber mill with snow on wheel
-      drawCarnivalRoubenka(ctx, 0, 0, 95, 55, isNight);
-      // Water wheel with icicles
-      ctx.strokeStyle = '#451A03';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(62, 10, 24, 0, Math.PI * 2);
-      ctx.stroke();
-      strokeOutline(ctx, 3);
+      drawAuthenticMill(ctx, 0, 0, isNight, 'winter', _time);
       ctx.restore();
       break;
     }
@@ -580,15 +601,7 @@ export function drawUnorDecorItem(
 
     case 'unor_school': {
       ctx.save();
-      drawCarnivalRoubenka(ctx, 0, 0, 105, 60, isNight);
-      // School bell cupola on roof
-      ctx.fillStyle = '#B45309';
-      ctx.fillRect(-8, -62, 16, 16);
-      strokeOutline(ctx, 2);
-      ctx.fillStyle = '#F59E0B';
-      ctx.beginPath();
-      ctx.arc(0, -54, 4, 0, Math.PI * 2);
-      ctx.fill();
+      drawAuthenticSchool(ctx, -6, 0, isNight, 'winter', _time);
       ctx.restore();
       break;
     }
@@ -600,10 +613,16 @@ export function drawUnorDecorItem(
 export function drawUnorDecoration(
   ctx: CanvasRenderingContext2D,
   decor: { type: string; x: number; y: number; scale?: number } | string,
-  _timeOrScale: number = 0,
-  isNight = false,
-  time = 0
+  timeOrNightOrScale: number | boolean = 0,
+  isNightOrTime: boolean | number = false,
+  maybeTime = 0
 ): void {
   const item = typeof decor === 'string' ? { type: decor, x: 0, y: 0 } : decor;
-  drawUnorDecorItem(ctx, item, typeof isNight === 'boolean' ? isNight : false, time);
+  const isNight = typeof timeOrNightOrScale === 'boolean'
+    ? timeOrNightOrScale
+    : (typeof isNightOrTime === 'boolean' ? isNightOrTime : false);
+  const time = typeof timeOrNightOrScale === 'number'
+    ? timeOrNightOrScale
+    : (typeof isNightOrTime === 'number' ? isNightOrTime : maybeTime);
+  drawUnorDecorItem(ctx, item, isNight, time);
 }

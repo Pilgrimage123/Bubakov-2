@@ -121,6 +121,7 @@ export interface ArenaEntityPassOptions {
   combatVfxEnabled?: boolean;
   afterEntitiesDrawn?: (entity: any) => void;
   dayPhase?: any;
+  curLvl?: any;
 }
 
 /**
@@ -276,7 +277,7 @@ export class ArenaRenderer {
     }
 
     const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
-    const isNight = isNightPhase(phase.id);
+    const isNight = Boolean(options?.curLvl?.isNightLevel || (typeof engine.activeLevelId === 'number' && engine.activeLevelId % 2 === 1) || isNightPhase(phase.id));
     if (engine.enemies && engine.enemies.length > 0) {
       for (let i = 0; i < engine.enemies.length; i++) {
         const enemy = engine.enemies[i];
@@ -501,8 +502,10 @@ export class ArenaRenderer {
       : 1;
     const isWinter = curLvl.season === 'winter';
 
+    const isLevelNight = Boolean(curLvl?.isNightLevel || (typeof engine.activeLevelId === 'number' && engine.activeLevelId % 2 === 1) || isNightPhase(phase.id));
     if (isWinter) {
-      ctx.fillStyle = getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+      const winterPhaseId = isLevelNight && (phase.id === 'noon' || phase.id === 'afternoon') ? 'night' : (phase.id || 'noon');
+      ctx.fillStyle = getStorybookSnowColor(winterPhaseId, kurazRatio);
     } else if (curLvl.theme === 'autumn_graveyard') {
       ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
     } else if (curLvl.theme === 'spring_river') {
@@ -579,7 +582,7 @@ export class ArenaRenderer {
       ctx.fillStyle = phase.ambientTint;
       ctx.fillRect(camera.x, camera.y, width, height);
     } else if (isWinter) {
-      ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
+      ctx.fillStyle = isLevelNight ? 'rgba(15, 23, 42, 0.22)' : 'rgba(180, 210, 240, 0.12)';
       ctx.fillRect(camera.x, camera.y, width, height);
     }
 
@@ -598,7 +601,7 @@ export class ArenaRenderer {
       const dynamicDecor = options.chunkCache.getDynamicDecor();
       if (dynamicDecor && dynamicDecor.length > 0) {
         const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
-    const isNight = isNightPhase(phase.id);
+    const isNight = Boolean(options?.curLvl?.isNightLevel || (typeof engine.activeLevelId === 'number' && engine.activeLevelId % 2 === 1) || isNightPhase(phase.id));
         for (let i = 0; i < dynamicDecor.length; i++) {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
@@ -619,7 +622,7 @@ export class ArenaRenderer {
       }
     } else if (engine.decor && engine.decor.length > 0) {
       const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
-    const isNight = isNightPhase(phase.id);
+    const isNight = Boolean(options?.curLvl?.isNightLevel || (typeof engine.activeLevelId === 'number' && engine.activeLevelId % 2 === 1) || isNightPhase(phase.id));
       for (let i = 0; i < engine.decor.length; i++) {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
@@ -770,7 +773,7 @@ export class ArenaRenderer {
     if (lightingEnabled) {
       const tLightStart = now();
       const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
-    const isNight = isNightPhase(phase.id);
+    const isNight = Boolean(options?.curLvl?.isNightLevel || (typeof engine.activeLevelId === 'number' && engine.activeLevelId % 2 === 1) || isNightPhase(phase.id));
       if ((isNight && engine.lightSources && engine.lightSources.length > 0) || kurazRatio < 0.35) {
         renderStorybookLightingComposite(
           ctx,

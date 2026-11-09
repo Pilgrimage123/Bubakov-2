@@ -7,6 +7,7 @@
  */
 
 const INK = '#1A1412';
+import { drawAllVillageCottages } from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -281,10 +282,12 @@ export function drawZariDecoration(
 ) {
   const isObj = typeof itemOrType === 'object' && itemOrType !== null;
   const type = isObj ? itemOrType.type : itemOrType;
-  const x = isObj ? 0 : timeOrX;
+  const x = isObj ? 0 : (typeof timeOrX === 'number' && typeof isNightOrY === 'number' ? timeOrX : 0);
   const y = isObj ? 0 : (typeof isNightOrY === 'number' ? isNightOrY : 0);
-  const time = isObj ? timeOrX : maybeTime;
-  const isNight = isObj ? Boolean(isNightOrY) : maybeIsNight;
+  const time = isObj ? timeOrX : (typeof timeOrX === 'number' && typeof isNightOrY === 'boolean' ? timeOrX : maybeTime);
+  const isNight = isObj
+    ? Boolean(isNightOrY)
+    : (typeof isNightOrY === 'boolean' ? isNightOrY : (typeof timeOrX === 'boolean' ? timeOrX : maybeIsNight));
 
   ctx.save();
   if (x !== 0 || y !== 0) {
@@ -328,9 +331,13 @@ export function drawZariDecoration(
 
       ctx.strokeStyle = INK;
       ctx.lineWidth = 2.5;
-      ctx.setLineDash([12, 16]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      if (typeof ctx.setLineDash === 'function') {
+        ctx.setLineDash([12, 16]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        ctx.stroke();
+      }
 
       // Gossamer threads (babí léto) floating in the sun OR silvery night mist ribbons
       if (!isNight) {
@@ -388,6 +395,28 @@ export function drawZariDecoration(
           drawAutumnBirchOrMaple(ctx, tx, ty, sc, kind, isNight);
         }
       }
+
+      // Canonical village cottages around green
+      drawAllVillageCottages(ctx, 'autumn', isNight, time);
+
+      // Title Cartouche at top (0, -1590)
+      ctx.save();
+      ctx.translate(0, -1590);
+      ctx.fillStyle = isNight ? '#0F172A' : '#FEF3C7';
+      ctx.beginPath();
+      if (typeof (ctx as any).roundRect === 'function') {
+        (ctx as any).roundRect(-260, -32, 520, 64, 16);
+      } else {
+        ctx.rect(-260, -32, 520, 64);
+      }
+      ctx.fill();
+      strokeOutline(ctx, 4);
+      ctx.fillStyle = isNight ? '#FDE047' : '#78350F';
+      ctx.font = 'bold 28px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isNight ? '✦ ZÁŘÍ V HRUSICÍCH – SVATOVÁCLAVSKÁ NOC ✦' : '✦ ZÁŘÍ V HRUSICÍCH – POSVÍCENÍ ✦', 0, 0);
+      ctx.restore();
       break;
     }
 

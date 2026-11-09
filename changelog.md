@@ -1,3 +1,22 @@
+## 2026-11-09 – Kompletní architektura vesnických budov, neprůchodnost a soulad krajin s kalendářem a denní dobou (ADR 0029, 0034)
+
+- **Kompletní architektura vesnických budov a odstranění plovoucích střech (`src/render/villageBuildingRenderer.ts`)**:
+  - Vybudován robustní procedurální vykreslovač tradiční lidové architektury Josefa Lady pokrývající roubenky, výměnky, hospodu U Sejků i U Cikánů, kostel sv. Jiří se zvonicí, obecní školu a hrusický vodní mlýn s náhonem a mlýnským kolem.
+  - Všechny budovy se nyní skládají z kompletní fyzické stavby: kamenná podezdívka (plinth), svislé a vodorovné roubené trámy s bílým spárováním nebo vápenná omítka, malované lomenice, dřevěné kazetové dveře s petlicí, vícedílná okna s nočním svitem svíček a cihlové komíny s valícím se dýmem (a čapími hnízdy na jaře).
+  - Eliminován dřívější neduh, kdy se na některých mapách vykreslovaly pouze střechy nebo nekompletní obrysy budov.
+- **Důsledná neprůchodnost a zarovnání kolizních boxů budov (`src/game/engine.ts`, `src/data/*Arena.ts`)**:
+  - Sjednoceny kolizní zóny `OBSTACLES` napříč všemi měsíci (Březen až Únor) tak, aby neprůchodná plocha přesně odpovídala viditelné kamenné a roubené základně stavení.
+  - Zajištěno nulové prolínání hráče i nepřátel stěnami budov bez zadrhávání o ozdobné přesahy střech.
+  - Vytvořena integrační testovací sada [`tests/stageBuildingsAndObstacles.test.ts`](file:///c:/Users/kocnaro/.gemini/antigravity/scratch/bubakov/tests/stageBuildingsAndObstacles.test.ts) ověřující neprůchodnost a konzistenci rozměrů všech 6 kanonických vesnických staveb na všech 24 mapách.
+- **Harmonizace krajiny všech 12 kalendářních měsíců a denní vs. noční doby (`src/render/*SvgLandscape.ts`, `src/render/arenaRenderer.ts`)**:
+  - Důsledná vazba 24 etap: sudé ID = Den, liché ID = Noc, odpovídající přesné folklórní chronologii (Předjaří, Velikonoce, Máj, Senoseč, Žně, Dožínky, Posvícení, Drakiáda, Svatomartinský hon, Advent, Tři králové a Masopust).
+  - `ArenaRenderer` garantuje správné uplatnění nočních fází (`curLvl.isNightLevel` / `activeLevelId % 2 === 1`) napříč všemi passy (backdrop, entity, statické dekorace i noční svit).
+  - Do všech krajin (Září, Listopad, Prosinec, Leden, Únor) doplněny ozdobné dřevěné a malované lidové kartuše (`cartouche banner`) v horní části arény s kaligrafickým označením měsíce a svátku.
+  - Ošetřena kompatibilita a polymorfní předávání parametrů v `draw*Decoration` a zaveden bezpečný fallback pro `roundRect`.
+- **Nová testovací sada měsíců a denní doby (`tests/monthAndDayNightLandscape.test.ts`)**:
+  - Zavedena ucelená automatizovaná kontrola všech 24 etap, skyboxů, terénních palet a kartuší.
+  - Všech 107 testovacích souborů (999 testů) prochází zeleně a Vite produkční sestavení je plně validní.
+
 ## 2026-11-09 – Vyladění herní hodnoty nepřátel, rejdových cen a indexu hrozby a otravnosti (ADR 0048)
 
 - **Kompozitní index hrozby a otravnosti (`src/data/enemies.ts`, ADR 0048)**:

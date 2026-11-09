@@ -7,6 +7,13 @@
  */
 
 const INK = '#1A1412';
+import {
+  drawAllVillageCottages,
+  drawAuthenticChurch,
+  drawAuthenticTavern,
+  drawAuthenticSchool,
+  drawAuthenticMill,
+} from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -537,10 +544,12 @@ export function drawRijenDecoration(
 ) {
   const isObj = typeof itemOrType === 'object' && itemOrType !== null;
   const type = isObj ? itemOrType.type : itemOrType;
-  const x = isObj ? 0 : timeOrX;
+  const x = isObj ? 0 : (typeof timeOrX === 'number' && typeof isNightOrY === 'number' ? timeOrX : 0);
   const y = isObj ? 0 : (typeof isNightOrY === 'number' ? isNightOrY : 0);
-  const time = isObj ? timeOrX : maybeTime;
-  const isNight = isObj ? Boolean(isNightOrY) : maybeIsNight;
+  const time = isObj ? timeOrX : (typeof timeOrX === 'number' && typeof isNightOrY === 'boolean' ? timeOrX : maybeTime);
+  const isNight = isObj
+    ? Boolean(isNightOrY)
+    : (typeof isNightOrY === 'boolean' ? isNightOrY : (typeof timeOrX === 'boolean' ? timeOrX : maybeIsNight));
 
   ctx.save();
   if (x !== 0 || y !== 0) {
@@ -652,6 +661,9 @@ export function drawRijenDecoration(
         drawPaperKite(ctx, -150, -640, 0.75, 0.15, ['#3B82F6', '#EF4444', '#F59E0B', '#EC4899']);
       }
 
+      // Canonical 6 village cottages matching MARCH_THAW_OBSTACLES
+      drawAllVillageCottages(ctx, 'autumn', isNight, time);
+
       ctx.restore();
       break;
     }
@@ -688,44 +700,7 @@ export function drawRijenDecoration(
     case 'rijen_church': {
       // Kostel sv. Mikuláše a hřbitůvek (-800, -650)
       ctx.save();
-      // St. Nicholas church body
-      ctx.fillStyle = isNight ? '#334155' : '#E2E8F0';
-      ctx.beginPath();
-      ctx.rect(-50, -40, 100, 75);
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Red shingle roof
-      ctx.fillStyle = isNight ? '#451A14' : '#991B1B';
-      ctx.beginPath();
-      ctx.moveTo(-60, -40);
-      ctx.lineTo(0, -95);
-      ctx.lineTo(60, -40);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Bell tower & onion dome
-      ctx.fillStyle = isNight ? '#334155' : '#E2E8F0';
-      ctx.beginPath();
-      ctx.rect(-22, -125, 44, 45);
-      ctx.fill();
-      strokeOutline(ctx, 3.5);
-      // Onion dome
-      ctx.fillStyle = isNight ? '#1E293B' : '#0F766E';
-      ctx.beginPath();
-      ctx.arc(0, -135, 18, 0, Math.PI * 2);
-      ctx.fill();
-      strokeOutline(ctx, 3);
-      // Golden cross on top
-      ctx.strokeStyle = '#F59E0B';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, -153);
-      ctx.lineTo(0, -168);
-      ctx.moveTo(-6, -163);
-      ctx.lineTo(6, -163);
-      ctx.stroke();
+      drawAuthenticChurch(ctx, 0, -30, isNight, 'autumn', time);
 
       // Autumn trees by churchyard
       drawAutumnTree(ctx, -75, 15, 0.85, 'golden', isNight);
@@ -757,43 +732,17 @@ export function drawRijenDecoration(
     }
 
     case 'rijen_tavern': {
-      // Hospoda U Sejků (440, -75)
+      // Hospoda U Sejků (440, -75) - full scale matching hospoda_main collision
       ctx.save();
-      // Tavern building
-      ctx.fillStyle = isNight ? '#3E2A1C' : '#FEF3C7';
-      ctx.beginPath();
-      ctx.rect(-55, -35, 110, 70);
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Shingle roof
-      ctx.fillStyle = isNight ? '#451A14' : '#9A3412';
-      ctx.beginPath();
-      ctx.moveTo(-65, -35);
-      ctx.lineTo(0, -80);
-      ctx.lineTo(65, -35);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Tavern sign: "U SEJKŮ - PEČENÉ BRAMBORY"
-      ctx.fillStyle = '#F59E0B';
-      ctx.beginPath();
-      if (typeof (ctx as any).roundRect === 'function') {
-        (ctx as any).roundRect(-30, -22, 60, 20, 4);
-      } else {
-        ctx.rect(-30, -22, 60, 20);
-      }
-      ctx.fill();
-      strokeOutline(ctx, 2);
+      drawAuthenticTavern(ctx, 22, 0, isNight, 'autumn', time);
 
       // Wooden beer table and benches outside
       ctx.fillStyle = isNight ? '#2A1B10' : '#5C381E';
-      ctx.fillRect(-28, 25, 56, 12);
+      ctx.fillRect(-28, 65, 56, 12);
       strokeOutline(ctx, 2.5);
 
       // Golden autumn tree next to tavern
-      drawAutumnTree(ctx, 65, 0, 0.9, 'russet', isNight);
+      drawAutumnTree(ctx, 165, 0, 0.9, 'russet', isNight);
       ctx.restore();
       break;
     }
@@ -826,42 +775,13 @@ export function drawRijenDecoration(
     case 'rijen_mill': {
       // Vodní mlýn s náhonem a pytli brambor (-880, 110)
       ctx.save();
-      // Mill building
-      ctx.fillStyle = isNight ? '#2E2218' : '#785434';
-      ctx.beginPath();
-      ctx.rect(-45, -30, 90, 60);
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Mill roof
-      ctx.fillStyle = isNight ? '#3A1E14' : '#854D0E';
-      ctx.beginPath();
-      ctx.moveTo(-52, -30);
-      ctx.lineTo(0, -68);
-      ctx.lineTo(52, -30);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Wooden water wheel on side
-      ctx.strokeStyle = '#3E2412';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(58, 6, 24, 0, Math.PI * 2);
-      ctx.stroke();
-      // Wheel spokes
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
-        ctx.beginPath();
-        ctx.moveTo(58, 6);
-        ctx.lineTo(58 + Math.cos(a) * 24, 6 + Math.sin(a) * 24);
-        ctx.stroke();
-      }
+      drawAuthenticMill(ctx, 0, 0, isNight, 'autumn', time);
 
       // Sacks of potatoes leaning on the mill wall
       ctx.fillStyle = isNight ? '#3E2A18' : '#A16207';
       ctx.beginPath();
-      ctx.ellipse(-28, 20, 12, 15, 0.1, 0, Math.PI * 2);
-      ctx.ellipse(-12, 22, 11, 14, -0.1, 0, Math.PI * 2);
+      ctx.ellipse(-28, 60, 12, 15, 0.1, 0, Math.PI * 2);
+      ctx.ellipse(-12, 62, 11, 14, -0.1, 0, Math.PI * 2);
       ctx.fill();
       strokeOutline(ctx, 2.5);
       ctx.restore();
@@ -902,41 +822,11 @@ export function drawRijenDecoration(
     case 'rijen_school': {
       // Obecní škola s dílnou na papírové draky (125, 550)
       ctx.save();
-      // School building
-      ctx.fillStyle = isNight ? '#334155' : '#F1F5F9';
-      ctx.beginPath();
-      ctx.rect(-50, -32, 100, 64);
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // Red shingle roof with small belfry
-      ctx.fillStyle = isNight ? '#451A14' : '#B91C1C';
-      ctx.beginPath();
-      ctx.moveTo(-58, -32);
-      ctx.lineTo(0, -72);
-      ctx.lineTo(58, -32);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 4);
-
-      // School belfry
-      ctx.fillStyle = isNight ? '#334155' : '#F1F5F9';
-      ctx.beginPath();
-      ctx.rect(-10, -90, 20, 20);
-      ctx.fill();
-      strokeOutline(ctx, 2.8);
-      ctx.fillStyle = isNight ? '#1E293B' : '#0F766E';
-      ctx.beginPath();
-      ctx.moveTo(-12, -90);
-      ctx.lineTo(0, -104);
-      ctx.lineTo(12, -90);
-      ctx.closePath();
-      ctx.fill();
-      strokeOutline(ctx, 2.5);
+      drawAuthenticSchool(ctx, -6, 0, isNight, 'autumn', time);
 
       // Displayed paper kites made by children
       if (!isNight) {
-        drawPaperKite(ctx, 42, -5, 0.6, -0.15, ['#EC4899', '#FBBF24', '#3B82F6', '#10B981']);
+        drawPaperKite(ctx, 110, -5, 0.6, -0.15, ['#EC4899', '#FBBF24', '#3B82F6', '#10B981']);
       }
       ctx.restore();
       break;

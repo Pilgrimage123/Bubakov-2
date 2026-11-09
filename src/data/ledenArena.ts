@@ -251,7 +251,7 @@ export function resolveLedenObstacles(
   entity: { x: number; y: number; radius?: number; isFlying?: boolean },
   allowFlyingBypass: boolean | number = true
 ): boolean {
-  if (typeof allowFlyingBypass === 'boolean' && allowFlyingBypass && entity.isFlying) return false;
+  if (allowFlyingBypass !== false && entity.isFlying) return false;
   const radius = typeof allowFlyingBypass === 'number' ? allowFlyingBypass : entity.radius || 18;
   let hit = false;
   for (const obs of LEDEN_OBSTACLES) {

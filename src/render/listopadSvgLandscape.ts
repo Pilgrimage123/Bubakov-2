@@ -7,6 +7,13 @@
  */
 
 const INK = '#1A1412';
+import {
+  drawAllVillageCottages,
+  drawAuthenticChurch,
+  drawAuthenticTavern,
+  drawAuthenticSchool,
+  drawAuthenticMill,
+} from './villageBuildingRenderer';
 
 function strokeOutline(ctx: CanvasRenderingContext2D, width = 3.5) {
   ctx.lineWidth = width;
@@ -87,10 +94,12 @@ export function drawListopadDecoration(
 ) {
   const isObj = typeof itemOrType === 'object' && itemOrType !== null;
   const type = isObj ? itemOrType.type : itemOrType;
-  const x = isObj ? 0 : timeOrX;
+  const x = isObj ? 0 : (typeof timeOrX === 'number' && typeof isNightOrY === 'number' ? timeOrX : 0);
   const y = isObj ? 0 : (typeof isNightOrY === 'number' ? isNightOrY : 0);
-  const time = isObj ? timeOrX : maybeTime;
-  const isNight = isObj ? Boolean(isNightOrY) : maybeIsNight;
+  const time = isObj ? timeOrX : (typeof timeOrX === 'number' && typeof isNightOrY === 'boolean' ? timeOrX : maybeTime);
+  const isNight = isObj
+    ? Boolean(isNightOrY)
+    : (typeof isNightOrY === 'boolean' ? isNightOrY : (typeof timeOrX === 'boolean' ? timeOrX : maybeIsNight));
 
   ctx.save();
   if (x !== 0 || y !== 0) {
@@ -159,7 +168,11 @@ export function drawListopadDecoration(
       ctx.strokeStyle = INK;
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.roundRect(-240, -1630, 480, 56, 12);
+      if (typeof (ctx as any).roundRect === 'function') {
+        (ctx as any).roundRect(-240, -1630, 480, 56, 12);
+      } else {
+        ctx.rect(-240, -1630, 480, 56);
+      }
       ctx.fill();
       ctx.stroke();
 
@@ -167,7 +180,10 @@ export function drawListopadDecoration(
       ctx.font = 'bold 22px "Cinzel", Georgia, serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(isNight ? 'LISTOPADOVÝ NOČNÍ HON V HRUSICÍCH' : 'SVATOMARTINSKÁ SLAVNOST V HRUSICÍCH', 0, -1602);
+      ctx.fillText(isNight ? '✦ LISTOPAD V HRUSICÍCH – NOČNÍ HON ✦' : '✦ LISTOPAD V HRUSICÍCH – SVATOMARTINSKÁ SLAVNOST ✦', 0, -1602);
+
+      // Canonical 6 village cottages matching MARCH_THAW_OBSTACLES
+      drawAllVillageCottages(ctx, 'autumn', isNight, time);
 
       ctx.restore();
       break;
@@ -190,35 +206,8 @@ export function drawListopadDecoration(
 
     case 'listopad_church': {
       ctx.save();
-      // Church of St. Nicholas hill
-      ctx.fillStyle = isNight ? '#334155' : '#CBD5E1';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(-45, -35, 90, 70, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      // Steeple
-      ctx.fillStyle = isNight ? '#1E293B' : '#94A3B8';
-      ctx.beginPath();
-      ctx.moveTo(-35, -35);
-      ctx.lineTo(0, -95);
-      ctx.lineTo(35, -35);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Golden cross on top
-      ctx.strokeStyle = '#FBBF24';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, -95);
-      ctx.lineTo(0, -112);
-      ctx.moveTo(-6, -104);
-      ctx.lineTo(6, -104);
-      ctx.stroke();
-
+      // Complete Church of St. Nicholas matching kostel_nave & tower
+      drawAuthenticChurch(ctx, 0, -30, isNight, 'autumn', time);
       drawLateAutumnTree(ctx, 65, 10, 0.95, isNight);
       ctx.restore();
       break;
@@ -243,50 +232,25 @@ export function drawListopadDecoration(
 
     case 'listopad_tavern': {
       ctx.save();
-      // Tavern U Sejků with roast goose spit
-      ctx.fillStyle = isNight ? '#292524' : '#FDE68A';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.roundRect(-60, -40, 120, 80, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Red tiled roof
-      ctx.fillStyle = isNight ? '#7F1D1D' : '#DC2626';
-      ctx.beginPath();
-      ctx.moveTo(-70, -40);
-      ctx.lineTo(0, -85);
-      ctx.lineTo(70, -40);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      // Complete tavern matching hospoda_main collision
+      drawAuthenticTavern(ctx, 22, 0, isNight, 'autumn', time);
 
       // Roast Goose Spit (Interactive POI marker)
       ctx.strokeStyle = '#23170F';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(35, 10);
-      ctx.lineTo(35, -15);
-      ctx.lineTo(65, -15);
-      ctx.lineTo(65, 10);
+      ctx.moveTo(35, 75);
+      ctx.lineTo(35, 50);
+      ctx.lineTo(65, 50);
+      ctx.lineTo(65, 75);
       ctx.stroke();
 
       // Golden roasted goose on spit
       ctx.fillStyle = isNight ? '#D97706' : '#F59E0B';
       ctx.beginPath();
-      ctx.ellipse(50, -15, 12, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(50, 50, 12, 8, 0, 0, Math.PI * 2);
       ctx.fill();
       strokeOutline(ctx, 2);
-
-      // Warm aroma smoke
-      const smokeOffset = Math.sin(time * 3) * 6;
-      ctx.strokeStyle = isNight ? 'rgba(254, 240, 138, 0.45)' : 'rgba(245, 158, 11, 0.4)';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(50, -25);
-      ctx.quadraticCurveTo(50 + smokeOffset, -40, 54, -55);
-      ctx.stroke();
 
       ctx.restore();
       break;
@@ -294,23 +258,8 @@ export function drawListopadDecoration(
 
     case 'listopad_school': {
       ctx.save();
-      // Village School with bell tower
-      ctx.fillStyle = isNight ? '#334155' : '#FEF3C7';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.roundRect(-50, -35, 100, 70, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = isNight ? '#475569' : '#B45309';
-      ctx.beginPath();
-      ctx.moveTo(-58, -35);
-      ctx.lineTo(0, -75);
-      ctx.lineTo(58, -35);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      // Complete school matching skola_main collision
+      drawAuthenticSchool(ctx, -6, 0, isNight, 'autumn', time);
       ctx.restore();
       break;
     }
@@ -336,21 +285,8 @@ export function drawListopadDecoration(
 
     case 'listopad_mill': {
       ctx.save();
-      // Water mill with resting wheel
-      ctx.fillStyle = isNight ? '#292524' : '#D97706';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.roundRect(-45, -30, 90, 60, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Mill wheel
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(-55, 10, 24, 0, Math.PI * 2);
-      ctx.stroke();
+      // Complete watermill matching mlyn_house collision
+      drawAuthenticMill(ctx, 0, 0, isNight, 'autumn', time);
       ctx.restore();
       break;
     }
