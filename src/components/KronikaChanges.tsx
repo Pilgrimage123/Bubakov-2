@@ -11,6 +11,18 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '9. listopadu 2026',
+    title: 'Vyladění herní hodnoty nepřátel, rejdových cen a indexu hrozby a otravnosti (ADR 0048)',
+    summary: 'Kompletní matematická rekalibrace 152 kanonických nepřátel a bossů: zavedení kompozitního indexu hrozby a otravnosti, vyvážení tabulky ENEMY_POINTS, monotónní odměny perníčků a krejcarů, dynamická rejdová cena BUBAK_THREAT_COSTS v Režisérovi výpravy a audit rovnováhy všech 24 fází.',
+    items: [
+      '⚖️ Kompozitní index hrozby a otravnosti: Matematický vzorec slučující efektivní zdraví (EHP), DPS, rychlost pohybu, dostřel i specifické multiplikátory otravnosti (+35 % krádeže dropů, +30 % projektily a kouzla, +50 % sebevražedné exploze, +35 % dělení, +25 % aury/louže, +30 % stínové uhýbání, +20 % létání) a slevy za zranitelnosti.',
+      '🏆 Rekalibrace ENEMY_POINTS: Důsledná stratifikace strašidel od drobné havěti a hejn (6–40 b.) přes běžná řadová strašidla (41–99 b.) a noční přízraky (100–340 b.) až po minibosse (400–3 500 b.) a 22 finálních bossů (950–16 800 b.) se zachováním kotevních benchmarků.',
+      '🍪 Spravedlivá ekonomika odměn: Perníčky (xp) i Krejcary (coinValue) rostou monotónně s herní hodnotou nepřítele bez exploitů u hejnových monster.',
+      '🎯 Dynamická rejdová cena BUBAK_THREAT_COSTS: Přechod z fixních 3 bodů na škálu 1–12 (18 pro minibosse/dvojčata). RunDirector tak přesně dávkuje roje i těžké špičky tlaku.',
+      '🗺️ Vyváženost všech 24 fází kampaně: Garance nulového uváznutí režiséra na všech obtížnostech (min. cena v bazénu ≤ 6), stabilní hustota 15–27 živých monster a plynulý růst zdraví bossů až k Bakchovi (30 000 HP).',
+    ],
+  },
+  {
+    date: '9. listopadu 2026',
     title: 'Ladovská vizuální hierarchie, noční křídová inverze a tříúrovňové slévání perníčků (ADR 0045, 0046, 0047)',
     summary: 'Rozsáhlá harmonizace výtvarné estetiky Josefa Lady a herní přehlednosti bullet heaven: sytá černohnědá kaligrafická linka, kontrastní lem lovce, bezkonturový klidný akvarelový terén, noční křídová inverze neosvětlených běsů, diskrétní 4-fázový kolébavý krok loutek, kreslené stavové efekty bez RGB tintu, knižní viněta nízké Kuráže, tříúrovňové slévání perníčků a malovaná Kramářská pečeť velitelů.',
     items: [

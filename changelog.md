@@ -1,3 +1,23 @@
+## 2026-11-09 – Vyladění herní hodnoty nepřátel, rejdových cen a indexu hrozby a otravnosti (ADR 0048)
+
+- **Kompozitní index hrozby a otravnosti (`src/data/enemies.ts`, ADR 0048)**:
+  - Implementován matematický model hodnotící skutečnou nebezpečnost a otravnost pro hráče napříč všemi 152 kanonickými nepřáteli.
+  - Vzorec kombinuje efektivní zdraví (EHP s poise a willpower), normalizovanou rychlost pohybu, DPS a dosah útoků s multiplikátory otravnosti: krádeže kořisti (+35 %), projektily a kouzla (+30 %), sebevražedné výbuchy (+50 %), dělení po smrti (+35 %), louže a mrazivé aury (+25 %), stínové uhýbání (+30 %) a létání (+20 %).
+  - Zohledněny kompenzační slevy za zranitelnosti: nulový poise (-15 %), vysoký hlad a nulová odolnost vůči jídlu (-18 %), pomalost (-15 %) a nečistost `isUnholy` (-10 %).
+- **Rekalibrace tabulky `ENEMY_POINTS` (`src/constants.ts`)**:
+  - Důsledná stratifikace všech strašidel: drobná havěť a hejna (6–40 b.), běžná řadová strašidla (41–99 b.), nebezpečné noční nestvůry (100–340 b.), minibossové a elity (400–3 500 b.) a 22 finálních bossů fází (950–16 800 b.).
+  - Zachovány kotevní benchmarky (např. Morana 950 b., Královská Polednice 7 500 b., Král Mrazík 14 000 b., Bakchus 16 800 b.).
+- **Férové odměny perníčků, krejcarů a hvězdiček nebezpečnosti (`src/data/enemies.ts`)**:
+  - Zavedena striktní monotonie: silnější nepřítel garantuje více perníčků (`xp`) i krejcarů (`coinValue`), což zamezuje grindovacím exploitům u hejn a odměňuje taktické střety.
+  - Zpřesněny hvězdičky nebezpečnosti `danger` od `★☆☆☆☆` po `★★★★★`.
+- **Dynamická rejdová cena strašidla `BUBAK_THREAT_COSTS` a integrace do Režiséra výpravy (`src/game/director.ts`)**:
+  - Nahrazen původní fixní náklad 3 za dynamické ohodnocení 1–12 (18 pro minibosse a trestná dvojčata).
+  - `RunDirector.getBubakThreatCost` čerpá rozpočet hrozeb přímo podle reálné síly nestvůry, což umožňuje bohatší rojení lehké havěti a napínavější dávkování těžkých běsů.
+- **Audit a garance vyváženosti všech 24 výprav kampaně (`tests/stageBalanceAndProgression.test.ts`)**:
+  - Headless simulace potvrdila stabilní hustotu živých nepřátel v optimálním okně 15–27 monster (s maximálními špičkami 34–46), bez lagování enginu i bez vyprázdnění arény.
+  - Garance nulového uváznutí režiséra: v každé fázi všech 24 úrovní je k dispozici monstrum s cenou $\le 6$, takže vlny plynule vznikají i na nejmírnější obtížnosti `2.00× Poklid za pecí`.
+  - Zachován přirozený rytmus střídání dne a noci (slavnostní sklizňová hejna ve dne vs. těžcí dravci a přízraky v noci).
+
 ## 2026-11-09 – Ladovská vizuální hierarchie, noční křídová inverze a tříúrovňové slévání perníčků (ADR 0045, 0046, 0047)
 
 - **Dvouúrovňová kaligrafická linka a kontrastní lem (`src/render/ladaRenderer.ts`, ADR 0045)**:
