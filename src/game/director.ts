@@ -201,6 +201,7 @@ export interface BubackaDiraState {
   emergence?: number;
   forceCertovaBabicka?: boolean;
   forceZakletaPrincezna?: boolean;
+  forceBarbucha?: boolean;
 }
 
 export type PacingValvePhase = 'buildup' | 'peak' | 'lull' | 'telegraph' | 'ambush';
@@ -1930,15 +1931,15 @@ export class RunDirector {
       const isNight = currentPhase.id === 'night' || currentPhase.id === 'midnight';
       const roll = Math.random();
 
-      // ADR 0052: 20% flat chance in night for Zakletá princezna
-      if (dira.forceZakletaPrincezna || (isNight && !dira.forceCertovaBabicka && roll < 0.20)) {
+      // ADR 0052: 20% flat chance in night for Zakletá princezna (unless forcing Barbucha or Babička)
+      if (!dira.forceBarbucha && (dira.forceZakletaPrincezna || (isNight && !dira.forceCertovaBabicka && roll < 0.20))) {
         this.triggerTelegraph('🕯️ PŮLNOČNÍ ZÁMRAK: Ze sarkofágu vstává Zakletá princezna! 👑💀', 4.0, engine);
         this.resolveZakletaPrinceznaSpawn(engine, dira);
         return;
       }
 
       // ADR 0051: Flat 5% chance to spawn Čertova babička instead of Barbucha
-      const isBabicka = Boolean(dira.forceCertovaBabicka ?? (isNight ? (roll >= 0.20 && roll < 0.25) : (roll < 0.05)));
+      const isBabicka = !dira.forceBarbucha && Boolean(dira.forceCertovaBabicka ?? (isNight ? (roll >= 0.20 && roll < 0.25) : (roll < 0.05)));
       if (isBabicka) {
         this.triggerTelegraph('🔥 SÍRA A SKOŘICE! Z DÍRY VYSTUPUJE ČERTOVA BABIČKA! 👵⚡', 4.0, engine);
         this.resolveCertovaBabickaSpawn(engine, dira);

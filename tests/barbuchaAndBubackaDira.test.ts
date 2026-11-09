@@ -130,6 +130,7 @@ describe('Bubácká díra & Strachem nacpaný Barbucha (ADR 0050)', () => {
     director.update(0.1, engine);
 
     const dira = director.bubackaDira!;
+    dira.forceBarbucha = true; // Ensure Barbucha spawns reliably without rare boss roll
     const player = engine.state.player;
     // Set player to low Kuráž (fearful state)
     player.hp = Math.round(player.maxHp * 0.2); // 20% health left
