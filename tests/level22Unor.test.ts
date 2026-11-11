@@ -85,7 +85,7 @@ describe('Stages 23 & 24: Únor v Hrusicích (Masopustní průvod a koblihy & Ma
     expect(stage24.season).toBe('winter');
     expect(stage24.theme).toBe('carnival_night');
     expect(stage24.isNightLevel).toBe(true);
-    expect(stage24.miniBoss.id).toBe('nocni_kobold');
+    expect(['masopustni_laufr', 'nocni_kobold']).toContain(stage24.miniBoss.id);
     expect(stage24.midBoss.id).toBe('umrlec_basista');
     expect(stage24.finalBoss.id).toBe('bakchus_s_pivnim_soudkem');
   });

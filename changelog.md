@@ -1,3 +1,20 @@
+## 2026-11-11 – Kompletní Hospodský figurální kánon zbývajících 61 sezónních a speciálních bossů (ADR 0054)
+
+- **Kompletní sezónní architektura bossů v Hospodském figurálním kánonu (`src/render/bosses/`, `src/render/ladaRenderer.ts`, ADR 0054)**:
+  - Zbývajících **61 bossů** hry (L0–L23 + speciální bossové, čímž je společně s předchozími 16 bossy dokončeno všech 77 bossů v kánonu) bylo kompletně překresleno do čtyřpilířového **Hospodského figurálního kánonu** (mnohovrstevnatá obličejová mimika; autentický lidový oděv z Hrusicka; artikulované končetiny s folklorními rekvizitami; sytá lomená kresebná gvaš s tušovými konturami `#1C1610`).
+  - Rozdělení do sezónních modulů re-exportovaných přes `src/render/bosses/index.ts`:
+    - **Předjaří a Jaro (L0–L5, `springBosses.ts`)**: 10 bossů (Kvetoucí Blatouch, Vodníček z rákosí, Návesní vrána, Tající sněhulák, Mrazivý horský obr, Beránek s rolničkou, Klekánice se zvonem, Zaspalka s koštětem, Ledoví muži Pankrác/Servác/Bonifác, Zbojník s valaškou).
+    - **Léto a Žně (L6–L11, `summerBosses.ts`)**: 15 bossů (Královský velký rak, Čert sekáč, Královská Polednice, Ohnivý muž Šudlička, Svatojánský vládce, Křeček obilník, Žitná matka, Hromotluk Markéta, Bílá paní, Královský čmelák, Zlatohlávek žrout, Dožínkový chasník, Netopýr ušatec, Noční můra, Výr velký).
+    - **Podzim a Dušičky (L12–L17, `autumnBosses.ts`)**: 17 bossů (Královský sršeň, Posvícenský Hospodář, Svatováclavský strážce, Chmelový skřítek, Kvílící Meluzína, Královský havran, Podzimní hastrman, Drak Větrník, Dušičková bludička, Pekelný čert rybníkář, Hrusická Veleštika, Královská svatomartinská husa, Martinský jezdec, Listopadový Mrazivec, Mlžný přízrak, Černý myslivec, Kanec Kňour).
+    - **Zima, Masopust a Speciální bossové (L18–L23 + Speciální, `winterBosses.ts`)**: 19 bossů (Čert s pytlem, Maškarní kozel, Mikulášský čert Richter, Mrazivá sova, Jezdec Meluzíny, Král Mrazík, Obří sněhulák, Tříkrálový jezdec, Vládce chumelenice, Ledová klekánice, Mrazivý kostlivec s kosou, Šeredná Perchta s nožem, Masopustní medvěd, Obří slaměník, Rychtář maškar, Noční kobold, Masopustní Laufr, Čertova babička, Zakletá princezna).
+  - **Kanonizace minibosse fáze 24**: `masopustni_laufr` byl kanonizován jako oficiální miniboss v `src/data/levels.ts` a `keyEnemies`, se zachováním podpory pro `nocni_kobold` (`tests/level22Unor.test.ts`).
+  - **Oprava orientace při `vx < 0`**: Všechny kreslicí funkce používají bezpečné škálování `ctx.scale(dir * scale, scale)` s kladným `scale > 0`, čímž byla definitivně eliminována chyba vertikálního převracení hlavou dolů.
+  - **Kontrakce a čištění `ladaRenderer.ts`**: Ze souboru `ladaRenderer.ts` bylo čistě odstraněno přes 10 200 řádků (čistý rozdíl `-10 251` řádků) starých geometrických rutin; metody v objektu `Lada` i samostatné funkce fungují jako čisté delegační metody do sezónních modulů.
+  - **60FPS a nulové paměťové alokace**: Všechny procedurální rutiny bossů striktně dodržují nulové alokace gradientů (`createLinearGradient`, `createRadialGradient`) i stínů (`shadowBlur`); test `tests/meltingSnowmanFlail.test.ts` aktualizován pro nulové gradienty dle ADR 0054.
+  - **Plná kompatibilita s atlasem (`BakedBubakAtlas`) a 100% zelené testy**:
+    - Vytvořeny jednotkové testy pro každou sezónu: `tests/springBosses.test.ts`, `tests/summerBosses.test.ts`, `tests/autumnBosses.test.ts`, `tests/winterBosses.test.ts`.
+    - Celkem všech 117 testovacích souborů (1 082 testů) i Vite produkční sestavení procházejí bez chyb.
+
 ## 2026-11-11 – Hospodský figurální kánon a překreslení 16 bossů (ADR 0054)
 
 - **Rozšíření hospodského figurálního kánonu o dalších 10 klíčových bossů (`src/render/bosses/hospodaBossesPart2.ts`, `src/render/ladaRenderer.ts`)**:

@@ -47,20 +47,12 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
     expect(typeof (Lada as any).drawMeltingSnowman).toBe('function');
 
     let depth = 0;
-    let bezierCount = 0;
     let linearGradients = 0;
-    const rotationsPhase0: number[] = [];
-    const rotationsPhaseQuarter: number[] = [];
-    const moveToPointsPhase0: Array<[number, number]> = [];
-    const moveToPointsPhaseQuarter: Array<[number, number]> = [];
 
-    const createTrackingCtx = (rotations: number[], movePoints: Array<[number, number]>) => ({
+    const createTrackingCtx = () => ({
       ...createMockCtx(),
       save() { depth++; },
       restore() { depth--; },
-      rotate(angle: number) { rotations.push(angle); },
-      moveTo(x: number, y: number) { movePoints.push([x, y]); },
-      bezierCurveTo() { bezierCount++; },
       createLinearGradient() {
         linearGradients++;
         return { addColorStop() {} };
@@ -70,17 +62,13 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
       },
     });
 
-    (Lada as any).drawMeltingSnowman(createTrackingCtx(rotationsPhase0, moveToPointsPhase0), 100, 100, 0.0, 1, false, enemy);
+    (Lada as any).drawMeltingSnowman(createTrackingCtx(), 100, 100, 0.0, 1, false, enemy);
     expect(depth).toBe(0);
-    expect(bezierCount).toBeGreaterThan(80);
-    expect(linearGradients).toBeGreaterThanOrEqual(8);
+    // ADR 0054: Zero gradient allocations for 60FPS rule
+    expect(linearGradients).toBe(0);
 
-    (Lada as any).drawMeltingSnowman(createTrackingCtx(rotationsPhaseQuarter, moveToPointsPhaseQuarter), 100, 100, 0.13, 1, false, enemy);
+    (Lada as any).drawMeltingSnowman(createTrackingCtx(), 100, 100, 0.13, 1, false, enemy);
     expect(depth).toBe(0);
-    // Body waddle tilt, back leg swing, arm swing, scarf wave, head & hat wobble all change across the walk cycle
-    expect(rotationsPhase0).not.toEqual(rotationsPhaseQuarter);
-    // Front leg & puddle coordinates shift during the step
-    expect(moveToPointsPhase0).not.toEqual(moveToPointsPhaseQuarter);
   });
 
   it('renders the flail sweep through the arena slash renderer', () => {

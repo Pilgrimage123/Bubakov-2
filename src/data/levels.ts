@@ -3327,9 +3327,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
-			id: "nocni_kobold",
-			name: "👺 Noční kobold",
-			warning: "👺 POZOR: ZE SKLEPA VYRÁŽÍ NOČNÍ KOBOLD A KRADE VÝSLUŽKU!",
+			id: "masopustni_laufr",
+			name: "🏃 Masopustní Laufr",
+			warning: "🏃 POZOR: V ČELE PRŮVODU CVÁLÁ BAREVNÝ MASOPUSTNÍ LAUFR!",
 			time: 85,
 			kills: 160,
 			multiplier: 1.0
@@ -3408,10 +3408,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				role: "Těžká oživlá basa s dunivým tónem"
 			},
 			{
+				id: "masopustni_laufr",
+				name: "Masopustní Laufr",
+				icon: "🏃",
+				role: "Barevný rychlý mini-boss v čele průvodu"
+			},
+			{
 				id: "nocni_kobold",
 				name: "Noční kobold",
 				icon: "👺",
-				role: "Noční mini-boss ze sklepů"
+				role: "Sklepní rarach a zloděj výslužky"
 			},
 			{
 				id: "umrlec_basista",
