@@ -70,12 +70,12 @@ const CORNER_ANIM_STYLES = `
 export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
   variant = 'default',
   showBottomCorners = true,
-  showInnerBorder = true,
+  showInnerBorder = false,
   className = '',
 }) => {
   const isSelected = variant === 'selected';
   const isLocked = variant === 'locked';
-  const isCallout = variant === 'callout';
+  void showInnerBorder;
 
   // Bright Czech village gouache flower & leaf colors
   const yellowPetalFill = isSelected ? '#FEF08A' : isLocked ? '#E2C872' : '#FACC15';
@@ -85,32 +85,16 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
 
   return (
     <div
-      className={`lada-card-decor-wrap pointer-events-none absolute inset-0 select-none z-10 ${className}`}
+      className={`lada-card-decor-wrap pointer-events-none absolute inset-0 select-none z-0 ${className}`}
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       aria-hidden="true"
     >
       <style>{CORNER_ANIM_STYLES}</style>
 
-      {/* Inner ex-libris vignette frame binding corner florals */}
-      {showInnerBorder && (
-        <div
-          className="absolute inset-[5px] rounded-[6px] border pointer-events-none transition-colors duration-150"
-          style={{
-            borderColor: isSelected
-              ? '#C53026'
-              : isCallout
-              ? '#B45309'
-              : isLocked
-              ? 'rgba(61, 34, 16, 0.22)'
-              : 'rgba(28, 22, 16, 0.30)',
-            borderWidth: isSelected ? '1.75px' : '1px',
-            borderStyle: 'solid',
-          }}
-        />
-      )}
-
       {/* TOP-LEFT CORNER: Josef Lada 5-petal yellow flower with stippled seed core */}
       <svg
-        className="absolute top-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        className="lada-corner-top-svg absolute top-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        style={{ position: 'absolute', top: '2px', left: '2px' }}
         width="28"
         height="28"
         viewBox="0 0 28 28"
@@ -187,7 +171,8 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
 
       {/* TOP-RIGHT CORNER: Josef Lada 5-petal yellow flower with stippled seed core + side forget-me-not */}
       <svg
-        className="absolute top-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        className="lada-corner-top-svg absolute top-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        style={{ position: 'absolute', top: '2px', right: '2px' }}
         width="28"
         height="28"
         viewBox="0 0 28 28"
@@ -265,7 +250,8 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
       {/* BOTTOM-LEFT CORNER: Folk leaf sprig with carmine-rose blossom + cornflower side bud */}
       {showBottomCorners && (
         <svg
-          className="absolute bottom-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          className="lada-corner-bottom-svg absolute bottom-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          style={{ position: 'absolute', bottom: '2px', left: '2px' }}
           width="24"
           height="24"
           viewBox="0 0 26 26"
@@ -322,7 +308,8 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
       {/* BOTTOM-RIGHT CORNER: Folk leaf sprig with carmine-rose blossom + cornflower side bud */}
       {showBottomCorners && (
         <svg
-          className="absolute bottom-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          className="lada-corner-bottom-svg absolute bottom-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          style={{ position: 'absolute', bottom: '2px', right: '2px' }}
           width="24"
           height="24"
           viewBox="0 0 26 26"

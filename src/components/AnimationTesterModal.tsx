@@ -398,9 +398,32 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
 
             const attackAngleRad = (attackAngleDeg * Math.PI) / 180;
 
+            const isBossEntity = Boolean((e as any).isBoss || e.category === 'bosses');
+            const isMinibossEntity = Boolean((e as any).isMiniboss);
+            const babickaStage = e.id === 'certova_babicka' ? (Math.floor(t / 2.8) % 4) + 1 : 1;
+            const babickaScale =
+              e.id === 'certova_babicka'
+                ? [1.18, 1.32, 1.48, 1.65][babickaStage - 1]
+                : e.id === 'zakleta_princezna'
+                ? 1.45
+                : e.id === 'barbucha'
+                ? 1.25 + Math.sin(t * 1.8) * 0.2
+                : 1.0;
+
+            const drawCy = isBossEntity || isMinibossEntity ? height * 0.7 : cy;
+            const testerScale = zoomScale / 1.2;
+
             const enemyProxy: any = {
               id: e.id,
               method: e.method,
+              category: e.category,
+              isBoss: isBossEntity,
+              isMiniboss: isMinibossEntity,
+              renderScale: babickaScale,
+              furyStage: e.id === 'certova_babicka' ? babickaStage : undefined,
+              pekaceShieldActive: e.id === 'certova_babicka' && babickaStage >= 3,
+              orbitAngle: t * 2.4,
+              nightStage: e.id === 'zakleta_princezna' ? (Math.floor(t / 3.2) % 3) + 1 : undefined,
               radius: rad,
               attackCadence: cadence,
               isAttacking,
@@ -414,19 +437,19 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               mass: e.mass || 1,
             };
             if (selectedPrefix) {
-              drawPrefixAura(ctx, cx, cy, rad * (zoomScale / 1.4), selectedPrefix, t);
+              drawPrefixAura(ctx, cx, drawCy, rad * testerScale, selectedPrefix, t);
             }
 
             ctx.save();
-            ctx.translate(cx, cy);
-            ctx.scale(zoomScale / 1.4, zoomScale / 1.4);
-            ctx.translate(-cx, -cy);
+            ctx.translate(cx, drawCy);
+            ctx.scale(testerScale, testerScale);
+            ctx.translate(-cx, -drawCy);
 
             drawEnemyRenderer(
               e.method,
               ctx,
               cx,
-              cy,
+              drawCy,
               t,
               vx,
               isPanicked,

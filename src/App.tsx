@@ -1825,7 +1825,8 @@ export default function App() {
   });
   const [quickGuideMode, setQuickGuideMode] = useState<'touch' | 'keyboard'>(() => {
     if (typeof window === 'undefined') return 'touch';
-    return ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 840) ? 'touch' : 'keyboard';
+    const isTouch = 'ontouchstart' in window || (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0) || window.innerWidth <= 840;
+    return isTouch ? 'touch' : 'keyboard';
   });
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
   const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
@@ -1839,9 +1840,9 @@ export default function App() {
   // Touch controls
   const [touchEnabled, setTouchEnabled] = useState(() => {
     if (typeof window === 'undefined') return false;
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isTouch = 'ontouchstart' in window || (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0);
     try {
-      const stored = window.localStorage.getItem('bubakov_touch_joystick');
+      const stored = window.localStorage?.getItem('bubakov_touch_joystick');
       return stored === null ? isTouch || window.innerWidth <= 1024 : stored === 'true';
     } catch {
       // Storage can be unavailable in private/restricted browser contexts.
@@ -1853,15 +1854,15 @@ export default function App() {
   // Mobile accessibility settings persist across runs; effects default to touch devices.
   const [mobileAccessibilityLevel, setMobileAccessibilityLevel] = useState(() => {
     try {
-      const saved = Number(window.localStorage.getItem('bubakov_mobile_accessibility_level'));
+      const saved = Number(window.localStorage?.getItem('bubakov_mobile_accessibility_level'));
       return Number.isInteger(saved) && saved >= 1 && saved <= 10 ? saved : 5;
     } catch { return 5; }
   });
   const [mobileAccessibilityAllDevices, setMobileAccessibilityAllDevices] = useState(() => {
-    try { return window.localStorage.getItem('bubakov_mobile_accessibility_all_devices') === 'true'; }
+    try { return window.localStorage?.getItem('bubakov_mobile_accessibility_all_devices') === 'true'; }
     catch { return false; }
   });
-  const isTouchScreen = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  const isTouchScreen = typeof window !== 'undefined' && ('ontouchstart' in window || (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0));
   const mobileAccessibilityEnabled = isTouchScreen || mobileAccessibilityAllDevices;
   const mobileAccessibilityScale = mobileAccessibilityEnabled ? mobileAccessibilityLevel : 0;
   const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
@@ -2512,8 +2513,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const sunForegroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const latestFpsRef = useRef<number>(60);
   const isUrlPerfOverlay = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    const params = new URLSearchParams(window.location.search);
+    if (typeof window === 'undefined' || !window.location) return false;
+    const search = window.location.search || '';
+    const params = new URLSearchParams(search);
     return params.has('perf') || params.has('benchmark');
   }, []);
 
@@ -6060,7 +6062,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
   // Auto-launch benchmark / performance test run if URL specifies ?benchmark=1 or ?perf_test=1
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    if (typeof window === 'undefined' || !window.location) return;
+    const search = window.location.search || '';
+    const urlParams = new URLSearchParams(search);
     if (urlParams.has('benchmark') || urlParams.has('perf_test')) {
       const profile = (urlParams.get('profile') as any) || 'balanced';
       metaRef.current.performanceProfile = profile;
@@ -6087,7 +6091,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const urlParams = new URLSearchParams(window.location.search);
+    const search = typeof window !== 'undefined' && window.location ? (window.location.search || '') : '';
+    const urlParams = new URLSearchParams(search);
     const showPerformanceOverlay = urlParams.has('perf') || urlParams.has('benchmark');
     const isBenchmarkMode = urlParams.has('benchmark') || urlParams.has('perf_test');
     const frameProfiler = new FrameProfiler();
@@ -6761,7 +6766,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               setRunStats((s) => ({
                 ...s,
                 warningBanner: curLvl.midBoss.warning,
-                bossTitle: `👑 MINIBOSS: ${curLvl.midBoss.name}`,
+                bossTitle: `👑 POLO-BOSS: ${curLvl.midBoss.name}`,
                 bossHpPct: 100,
               }));
               sound.boss();

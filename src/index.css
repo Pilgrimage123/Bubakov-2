@@ -457,7 +457,7 @@ body {
 .char-card-unlocked-badge {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 28px;
   background: var(--leaf-green);
   color: var(--white);
   border: 2px solid var(--ink);
@@ -466,7 +466,7 @@ body {
   padding: 2px 7px;
   border-radius: 6px;
   box-shadow: 2px 2px 0 var(--ink);
-  max-width: calc(100% - 20px);
+  max-width: calc(100% - 56px);
   text-align: center;
   z-index: 2;
 }
@@ -474,7 +474,7 @@ body {
 .char-card-locked-badge {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 28px;
   background: var(--locked-dark);
   color: var(--cream);
   border: 2px solid var(--ink);
@@ -483,7 +483,7 @@ body {
   padding: 2px 7px;
   border-radius: 6px;
   box-shadow: 2px 2px 0 var(--ink);
-  max-width: calc(100% - 20px);
+  max-width: calc(100% - 56px);
   text-align: center;
   z-index: 2;
 }
@@ -1500,7 +1500,7 @@ body {
   background: #FAF5E8;
   border: 3.5px solid var(--ink);
   border-radius: 12px;
-  padding: 15px 16px 14px 16px;
+  padding: 20px 18px 18px 18px;
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: 4px 4px 0px var(--ink);
@@ -1514,6 +1514,16 @@ body {
   max-width: 100%;
   overflow-wrap: break-word;
   z-index: 1;
+}
+
+.level-card > *:not(.lada-card-decor-wrap),
+.char-card > *:not(.lada-card-decor-wrap):not(.char-card-unlocked-badge):not(.char-card-locked-badge) {
+  position: relative;
+  z-index: 1;
+}
+
+.panel > .lada-card-decor-wrap > .lada-corner-bottom-svg {
+  display: none;
 }
 
 .level-card:hover {
@@ -1540,7 +1550,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
-  padding: 0 4px;
+  padding: 0 8px;
 }
 
 .level-badge {
@@ -4436,65 +4446,206 @@ body {
   margin: 1px 0 0 0;
 }
 
-/* Tab 1: Illustrated Map & Wooden Village Signposts (Rozchodníky) */
+/* Tab 1: Procházka po krajině — Illustrated Map & Wooden Village Signposts (Rozchodníky) */
+.lada-walk-season-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.lada-walk-season-btn {
+  flex: 1 1 auto;
+  text-align: center;
+  white-space: nowrap;
+  background: #F6EBD8;
+  color: #221B17;
+  border: 2px solid #1C1613;
+  border-radius: 6px;
+  padding: 2px 5px;
+  font-family: var(--font-storybook);
+  font-size: 0.66rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1C1613;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.lada-walk-season-btn:hover {
+  background: #E2A83B;
+  transform: translateY(-1px);
+}
+
+.lada-walk-season-btn.active {
+  background: #2B5B84;
+  color: #F6EBD8;
+  box-shadow: 2px 2px 0 #1C1613, 0 0 0 1.5px #E2A83B;
+}
+
 .lada-illustrated-map-frame {
   position: relative;
   width: 100%;
-  height: 255px;
+  height: auto;
+  min-height: 290px;
+  padding: 8px;
   border: 3.5px solid #1C1613;
   border-radius: 8px;
   overflow: hidden;
   background: #F2E5C6;
   box-shadow: 4px 4px 0 #1C1613;
+  box-sizing: border-box;
+}
+
+.lada-map-bg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lada-walk-signpost-grid {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  width: 100%;
+  gap: 5px 6px;
+}
+
+.lada-walk-signpost-grid.grid-all-24 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lada-walk-signpost-grid.grid-season-6 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .lada-walk-signpost-grid.grid-all-24 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lada-walk-signpost-grid.grid-season-6 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .lada-signpost-marker {
-  position: absolute;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
   z-index: 3;
-  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .lada-signpost-marker:hover {
   z-index: 5;
-  transform: translate(-50%, -54%) scale(1.08) !important;
+  transform: translateY(-2px) scale(1.02) !important;
 }
 
 .lada-signpost-plank {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
   background: #E2A83B;
   color: #221B17;
-  border: 2.5px solid #1C1613;
-  border-radius: 4px;
-  padding: 2px 7px;
+  border: 2px solid #1C1613;
+  border-radius: 5px;
+  padding: 3px 6px;
   font-family: var(--font-storybook);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 900;
-  white-space: nowrap;
+  line-height: 1.15;
+  text-align: left;
+  white-space: normal;
   box-shadow: 2px 2px 0 #1C1613;
+}
+
+.lada-walk-signpost-grid.grid-season-6 .lada-signpost-plank {
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.lada-signpost-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  width: 100%;
+}
+
+.lada-signpost-num {
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lada-signpost-phase {
+  font-size: 0.62rem;
+  font-weight: 800;
+  opacity: 0.92;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lada-signpost-subtitle-row {
+  font-size: 0.64rem;
+  font-weight: 800;
+  opacity: 0.92;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.lada-walk-signpost-grid.grid-season-6 .lada-signpost-subtitle-row {
+  font-size: 0.74rem;
+  white-space: normal;
+}
+
+.lada-signpost-boss-row {
+  font-size: 0.68rem;
+  font-weight: 800;
+  margin-top: 2px;
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lada-signpost-marker.completed .lada-signpost-plank {
+  background: #4D784E;
+  color: #F6EBD8;
 }
 
 .lada-signpost-marker.selected .lada-signpost-plank {
   background: #C83E2B;
   color: #F6EBD8;
-  border-width: 3px;
-  box-shadow: 3px 3px 0 #1C1613, 0 0 0 2px #E2A83B;
+  border-width: 2.5px;
+  box-shadow: 2.5px 2.5px 0 #1C1613, 0 0 0 2px #E2A83B;
 }
 
 .lada-signpost-marker.locked .lada-signpost-plank {
-  background: #D5B886;
-  color: #6E3B1E;
-  opacity: 0.88;
+  background: #EDE1C5;
+  color: #5C3A21;
+  opacity: 0.94;
 }
 
 .lada-signpost-post {
   width: 4px;
-  height: 10px;
+  height: 5px;
   background: #6E3B1E;
   border-left: 1.5px solid #1C1613;
   border-right: 1.5px solid #1C1613;
@@ -5117,7 +5268,7 @@ body {
   text-transform: uppercase;
   color: rgba(34, 27, 23, 0.78);
   border-bottom: 1.5px dashed rgba(28, 22, 19, 0.32);
-  padding: 2px 10px 5px;
+  padding: 2px 10px 5px 36px;
   margin-bottom: 8px;
   position: relative;
 }

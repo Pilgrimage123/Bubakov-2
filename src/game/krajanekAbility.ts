@@ -121,7 +121,7 @@ export function computeKrajanekSteering(
     callbacks?.isTouchInput ||
     player?.isTouchInput ||
     player?.isTouchDevice ||
-    (typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0))
+    (typeof window !== 'undefined' && ('ontouchstart' in window || (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0)))
   );
 
   // Turn rate cap based on phase:

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { sound } from '../audio';
 import { ladaPageFoley } from './ladaPageTurnAudio';
 import { GAME_LEVELS, type GameLevelDef } from '../data/levels';
+import { LEVEL_ORDER, getLevelProgress, isLevelFullyUnlocked } from '../data/levelUnlocks';
 import { HUNTER_UNLOCKS, getHunterProgress } from '../data/hunterUnlocks';
 import { HUNTER_DETAILS, type HunterDetailKey } from '../data/hunterDetails';
 import { ENEMIES, getEnemyCadenceInfo } from '../data/enemies';
@@ -748,6 +749,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
   totalWeaponsCount,
 }) => {
   const [activeTab, setActiveTab] = useState<BookChapterTab>('map');
+  const [walkSeasonFilter, setWalkSeasonFilter] = useState<'all' | 'spring' | 'summer' | 'autumn' | 'winter'>('all');
   const [outgoingTab, setOutgoingTab] = useState<BookChapterTab | null>(null);
   const [isPeekingCorner, setIsPeekingCorner] = useState<boolean>(false);
   const [hasSecondaryCascade, setHasSecondaryCascade] = useState<boolean>(false);
@@ -1184,40 +1186,60 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     setPortraitIndex((prev) => (prev + 1) % PORTRAIT_CHARACTERS.length);
   };
 
-  // Signpost coordinates on the Right-Page Illustrated Landscape Map (aligned 1:1 with the 12 GAME_LEVELS)
-  const MAP_SIGNPOSTS: Array<{
-    levelId: GameLevelId;
-    x: number;
-    y: number;
-    shortLabel: string;
-    regionNote: string;
-    tilt: number;
-  }> = [
-    { levelId: 0, x: 18, y: 74, shortLabel: '1. Předjaří (Den)', regionNote: 'Tající louky u vsi', tilt: -3 },
-    { levelId: 1, x: 44, y: 80, shortLabel: '2. Předjaří (Noc)', regionNote: 'Zamrzlý rybník', tilt: 2 },
-    { levelId: 2, x: 24, y: 48, shortLabel: '3. Duben (Den)', regionNote: 'Rozkvetlá náves', tilt: -2 },
-    { levelId: 3, x: 54, y: 54, shortLabel: '4. Duben (Noc)', regionNote: 'Filipojakubská noc', tilt: 3 },
-    { levelId: 4, x: 78, y: 68, shortLabel: '5. Květen (Den)', regionNote: 'Májová slavnost', tilt: -2 },
-    { levelId: 5, x: 76, y: 40, shortLabel: '6. Květen (Noc)', regionNote: 'Májová noc v hvozdu', tilt: 2 },
-    { levelId: 6, x: 34, y: 22, shortLabel: '7. Červen (Den)', regionNote: 'Letní senoseč', tilt: -3 },
-    { levelId: 7, x: 74, y: 18, shortLabel: '8. Červen (Noc)', regionNote: 'Svatojánská noc', tilt: 3 },
-    { levelId: 8, x: 16, y: 32, shortLabel: '9. Červenec (Den)', regionNote: 'Červencové žně', tilt: -2 },
-    { levelId: 9, x: 52, y: 34, shortLabel: '10. Červenec (Noc)', regionNote: 'Bouře sv. Eliáše', tilt: 2 },
-    { levelId: 10, x: 52, y: 14, shortLabel: '11. Srpen (Den)', regionNote: 'Dožínková slavnost', tilt: -1 },
-    { levelId: 11, x: 88, y: 24, shortLabel: '12. Srpen (Noc)', regionNote: 'Vavřinecká noc', tilt: 3 },
-    { levelId: 12, x: 30, y: 10, shortLabel: '13. Září (Den)', regionNote: 'Zářijové posvícení', tilt: -2 },
-    { levelId: 13, x: 82, y: 10, shortLabel: '14. Září (Noc)', regionNote: 'Svatováclavská noc', tilt: 2 },
-    { levelId: 14, x: 22, y: 6, shortLabel: '15. Říjen (Den)', regionNote: 'Říjnová drakiáda', tilt: -1 },
-    { levelId: 15, x: 74, y: 6, shortLabel: '16. Říjen (Noc)', regionNote: 'Dušičková noc', tilt: 2 },
-    { levelId: 16, x: 14, y: 16, shortLabel: '17. Listopad (Den)', regionNote: 'Svatomartinské posvícení', tilt: -2 },
-    { levelId: 17, x: 62, y: 16, shortLabel: '18. Listopad (Noc)', regionNote: 'Lov v mlze a uhlířský milíř', tilt: 3 },
-    { levelId: 18, x: 38, y: 4, shortLabel: '19. Prosinec (Den)', regionNote: 'Adventní čas a koledy', tilt: -1 },
-    { levelId: 19, x: 86, y: 4, shortLabel: '20. Prosinec (Noc)', regionNote: 'Štědrovečerní tichá noc', tilt: 2 },
-    { levelId: 20, x: 26, y: 88, shortLabel: '21. Leden (Den)', regionNote: 'Tříkrálová koleda a sníh', tilt: -2 },
-    { levelId: 21, x: 68, y: 88, shortLabel: '22. Leden (Noc)', regionNote: 'Tříkrálová noc a perchta', tilt: 2 },
-    { levelId: 22, x: 20, y: 94, shortLabel: '23. Únor (Den)', regionNote: 'Masopustní průvod a koblihy', tilt: -2 },
-    { levelId: 23, x: 64, y: 94, shortLabel: '24. Únor (Noc)', regionNote: 'Masopustní rej a pochovávání basy', tilt: 2 },
-  ];
+  // Canonical 24 stages of the Hrusice year dynamically derived from LEVEL_ORDER & GAME_LEVELS
+  const WALK_STAGES = useMemo(() => {
+    const tilts = [-1.2, 1.1, -0.8, 1.3, -1.0, 0.9];
+    return (LEVEL_ORDER as GameLevelId[]).map((lvlId, idx) => {
+      const lvl = GAME_LEVELS[lvlId] || GAME_LEVELS[0];
+      const prog = levelProgress?.[lvlId] || getLevelProgress(lvlId, meta);
+      const isUnlocked = prog?.isUnlocked ?? isLevelFullyUnlocked(lvlId, meta);
+      const isCompleted =
+        !!(meta?.completedLevels && meta.completedLevels[lvlId]) ||
+        (meta?.highestLevelUnlocked ?? 0) > lvlId ||
+        (lvlId < 23 && isLevelFullyUnlocked(lvlId + 1, meta));
+      const isSelected = selectedLevelId === lvlId;
+      const isNight = !!lvl.isNightLevel;
+      const rawMonthPart = lvl.name
+        .replace(/^\d+\.\s*/, '')
+        .split('–')[0]
+        .replace(/\s*v\s+Hrusicích/i, '')
+        .trim();
+      const monthName = rawMonthPart || `Výprava ${lvlId + 1}`;
+      const phaseLabel = isNight ? 'Noc' : 'Den';
+      const phaseIcon = isNight ? '🌙' : '☀️';
+      return {
+        levelId: lvlId,
+        stageNum: lvlId + 1,
+        monthName,
+        phaseLabel,
+        phaseIcon,
+        shortLabel: `${lvlId + 1}. ${monthName} (${phaseLabel})`,
+        shortTitle: lvl.shortTitle,
+        regionNote: lvl.subtitle,
+        season: lvl.season,
+        tilt: tilts[idx % tilts.length],
+        isUnlocked,
+        isCompleted,
+        isSelected,
+        percent: prog?.percent ?? 0,
+        prog,
+        lvl,
+      };
+    });
+  }, [levelProgress, meta, selectedLevelId]);
+
+  const unlockedStagesCount = useMemo(
+    () => WALK_STAGES.filter((s) => s.isUnlocked).length,
+    [WALK_STAGES]
+  );
+
+  const visibleWalkStages = useMemo(
+    () =>
+      walkSeasonFilter === 'all'
+        ? WALK_STAGES
+        : WALK_STAGES.filter((s) => s.season === walkSeasonFilter),
+    [WALK_STAGES, walkSeasonFilter]
+  );
 
   const activeHunterProg = getHunterProgress(activePortrait.id, meta);
   const levelLoreText = currentLevel.lore || currentLevel.description || '';
@@ -1271,7 +1293,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
         <div className="lada-page-running-header">
           <span>
             {tab === 'map'
-              ? 'Kapitola I · Krajina za devatero horami'
+              ? 'Kapitola I · Procházka po krajině'
               : tab === 'inventory'
               ? `Kapitola II · Venkovská zbrojnice (${unlockedWeaponsCount}/${totalWeaponsCount})`
               : 'Kapitola III · Bubáci a hastrmani'}
@@ -1282,83 +1304,115 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
         {tab === 'map' && (
           <div className="lada-right-tab-content">
             <div className="lada-chapter-heading-wrap">
-              <h2 className="lada-chapter-heading">Krajina za devatero horami</h2>
+              <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                <h2 className="lada-chapter-heading">Procházka po krajině</h2>
+                <span className="text-[11px] font-black px-2 py-0.5 rounded border border-[#1C1613] bg-[#F6EBD8] text-[#221B17]">
+                  Otevřeno {unlockedStagesCount} / {WALK_STAGES.length} výprav
+                </span>
+              </div>
               <p className="lada-chapter-sub">
-                Ilustrovaná mapa a výběr výpravy
+                Ilustrovaná stezka hrusickým rokem (1.–24. výprava) · Kliknutím zvolte otevřenou výpravu nebo prozkoumejte stopy uzamčené cesty
               </p>
+            </div>
+
+            {/* Seasonal Filter Bar (Celý rok 1–24 vs. Jaro, Léto, Podzim, Zima) */}
+            <div
+              className="lada-walk-season-tabs"
+              role="tablist"
+              aria-label="Období procházky po krajině"
+            >
+              {([
+                { id: 'all', label: '🗺️ Všech 24 (1–24)' },
+                { id: 'spring', label: '🌱 Jaro (1–6)' },
+                { id: 'summer', label: '☀️ Léto (7–12)' },
+                { id: 'autumn', label: '🍂 Podzim (13–18)' },
+                { id: 'winter', label: '❄️ Zima (19–24)' },
+              ] as const).map((sTab) => {
+                const isActive = walkSeasonFilter === sTab.id;
+                return (
+                  <button
+                    key={sTab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    disabled={!isStaticInteractive}
+                    className={`lada-walk-season-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      if (!isStaticInteractive) return;
+                      ladaPageFoley.playCornerHover();
+                      sound.coin();
+                      setWalkSeasonFilter(sTab.id);
+                    }}
+                  >
+                    {sTab.label}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="lada-illustrated-map-frame">
               <svg
-                viewBox="0 0 520 310"
-                className="w-full h-full block"
+                viewBox="0 0 520 340"
+                preserveAspectRatio="none"
+                className="lada-map-bg-svg"
+                aria-hidden="true"
                 style={{
                   filter: lightweightFilter ? undefined : 'url(#lada-ink-filter)',
                   mixBlendMode: 'multiply',
                 }}
               >
-                <rect x="0" y="0" width="520" height="310" fill="#F2E5C6" />
+                <rect x="0" y="0" width="520" height="340" fill="#F2E5C6" />
                 <path
-                  d="M 0 0 L 520 0 L 520 120 Q 380 95, 250 115 Q 110 135, 0 105 Z"
+                  d="M 0 0 L 520 0 L 520 110 Q 380 88, 250 108 Q 110 128, 0 98 Z"
                   fill="#2B5B84"
-                  fillOpacity="0.82"
+                  fillOpacity="0.42"
                 />
                 <path
-                  d="M 0 115 Q 120 72, 260 105 Q 390 70, 520 102 L 520 310 L 0 310 Z"
+                  d="M 0 105 Q 120 68, 260 98 Q 390 66, 520 94 L 520 340 L 0 340 Z"
                   fill="#4D784E"
-                  fillOpacity="0.55"
+                  fillOpacity="0.34"
                   stroke="#1C1613"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                 />
                 <path
-                  d="M 0 175 Q 160 145, 310 175 Q 430 195, 520 165 L 520 310 L 0 310 Z"
+                  d="M 0 185 Q 160 155, 310 185 Q 430 205, 520 175 L 520 340 L 0 340 Z"
                   fill="#E2A83B"
-                  fillOpacity="0.45"
+                  fillOpacity="0.32"
                   stroke="#1C1613"
-                  strokeWidth="2.8"
+                  strokeWidth="2.4"
                 />
 
+                {/* Serpentine village footpath winding through all 4 seasons */}
                 <path
-                  d="M 45 295 Q 140 245, 210 210 Q 285 170, 240 120 Q 200 80, 370 55"
+                  d="M 45 35 L 475 35 Q 505 58, 475 82 L 45 82 Q 15 106, 45 130 L 475 130 Q 505 154, 475 178 L 45 178 Q 15 202, 45 226 L 475 226 Q 505 250, 475 274 L 45 274 Q 15 298, 45 316 L 475 316"
                   fill="none"
                   stroke="#1C1613"
-                  strokeWidth="18"
+                  strokeWidth="9"
                   strokeLinecap="round"
+                  strokeOpacity="0.28"
                 />
                 <path
-                  d="M 45 295 Q 140 245, 210 210 Q 285 170, 240 120 Q 200 80, 370 55"
+                  d="M 45 35 L 475 35 Q 505 58, 475 82 L 45 82 Q 15 106, 45 130 L 475 130 Q 505 154, 475 178 L 45 178 Q 15 202, 45 226 L 475 226 Q 505 250, 475 274 L 45 274 Q 15 298, 45 316 L 475 316"
                   fill="none"
                   stroke="#F6EBD8"
-                  strokeWidth="12"
+                  strokeWidth="5"
+                  strokeDasharray="8 6"
                   strokeLinecap="round"
+                  strokeOpacity="0.65"
                 />
 
                 <ellipse
                   cx="235"
-                  cy="255"
-                  rx="76"
-                  ry="32"
+                  cy="285"
+                  rx="72"
+                  ry="26"
                   fill="#2B5B84"
-                  fillOpacity="0.88"
+                  fillOpacity="0.45"
                   stroke="#1C1613"
-                  strokeWidth="3.2"
-                />
-                <path
-                  d="M 195 252 Q 215 247, 235 252 M 235 264 Q 255 259, 275 264"
-                  stroke="#F6EBD8"
-                  strokeWidth="2"
-                  fill="none"
+                  strokeWidth="2.2"
                 />
 
-                <path
-                  d="M 175 222 Q 210 198, 245 222 L 245 236 Q 210 218, 175 236 Z"
-                  fill="#D5B886"
-                  stroke="#1C1613"
-                  strokeWidth="3"
-                />
-                <path d="M 192 230 A 18 12 0 0 1 228 230" fill="#1C1613" />
-
-                <g transform="translate(88, 92) rotate(-2)">
+                <g transform="translate(36, 44) scale(0.78) rotate(-2)" opacity="0.55">
                   <rect x="0" y="28" width="44" height="36" fill="#F6EBD8" stroke="#1C1613" strokeWidth="3" />
                   <polygon
                     points="-4,28 22,8 48,28"
@@ -1374,73 +1428,97 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                     stroke="#1C1613"
                     strokeWidth="3"
                   />
-                  <line x1="39" y1="-42" x2="39" y2="-52" stroke="#1C1613" strokeWidth="2.5" />
-                  <line x1="34" y1="-48" x2="44" y2="-48" stroke="#1C1613" strokeWidth="2.5" />
                 </g>
 
                 {[
-                  { tx: 420, ty: 52, s: 1 },
-                  { tx: 452, ty: 62, s: 1.1 },
-                  { tx: 482, ty: 48, s: 0.95 },
-                  { tx: 438, ty: 88, s: 1 },
-                  { tx: 474, ty: 94, s: 1.05 },
+                  { tx: 432, ty: 48, s: 0.85 },
+                  { tx: 462, ty: 56, s: 0.92 },
+                  { tx: 488, ty: 44, s: 0.8 },
                 ].map((tree, idx) => (
-                  <g key={idx} transform={`translate(${tree.tx}, ${tree.ty}) scale(${tree.s})`}>
+                  <g key={idx} transform={`translate(${tree.tx}, ${tree.ty}) scale(${tree.s})`} opacity="0.55">
                     <polygon
                       points="0,-28 -16,6 16,6"
                       fill="#25382C"
                       stroke="#1C1613"
-                      strokeWidth="2.8"
+                      strokeWidth="2.5"
                       strokeLinejoin="round"
                     />
                     <polygon
                       points="0,-42 -13,-12 13,-12"
                       fill="#4D784E"
                       stroke="#1C1613"
-                      strokeWidth="2.8"
+                      strokeWidth="2.5"
                       strokeLinejoin="round"
                     />
                   </g>
                 ))}
               </svg>
 
-              {MAP_SIGNPOSTS.map((sp) => {
-                const prog = levelProgress[sp.levelId];
-                const isUnlocked = prog?.isUnlocked ?? false;
-                const isSelected = selectedLevelId === sp.levelId;
-                return (
-                  <button
-                    key={sp.levelId}
-                    type="button"
-                    disabled={!isStaticInteractive}
-                    className={`lada-signpost-marker ${isSelected ? 'selected' : ''} ${
-                      isUnlocked ? 'unlocked' : 'locked'
-                    }`}
-                    style={{
-                      left: `${sp.x}%`,
-                      top: `${sp.y}%`,
-                      transform: `translate(-50%, -50%) rotate(${sp.tilt}deg)`,
-                    }}
-                    onClick={() => {
-                      if (!isStaticInteractive) return;
-                      if (isUnlocked) {
-                        sound.coin();
-                        onSelectLevel(sp.levelId);
-                      } else {
-                        sound.hit();
-                        onInspectLockedLevel(prog);
-                      }
-                    }}
-                    title={`${prog?.spoiledName || sp.shortLabel} (${sp.regionNote})`}
-                  >
-                    <span className="lada-signpost-plank">
-                      {isSelected ? '★ ' : !isUnlocked ? '🔒 ' : ''}
-                      {sp.shortLabel}
-                    </span>
-                    <span className="lada-signpost-post" aria-hidden="true" />
-                  </button>
-                );
-              })}
+              <div
+                className={`lada-walk-signpost-grid ${
+                  walkSeasonFilter === 'all' ? 'grid-all-24' : 'grid-season-6'
+                }`}
+              >
+                {visibleWalkStages.map((sp) => {
+                  const statusBadge = sp.isSelected
+                    ? '★'
+                    : sp.isCompleted
+                    ? '✓'
+                    : sp.isUnlocked
+                    ? '🔓'
+                    : '🔒';
+                  return (
+                    <button
+                      key={sp.levelId}
+                      type="button"
+                      disabled={!isStaticInteractive}
+                      className={`lada-signpost-marker ${sp.isSelected ? 'selected' : ''} ${
+                        sp.isCompleted ? 'completed' : ''
+                      } ${sp.isUnlocked ? 'unlocked' : 'locked'}`}
+                      onClick={() => {
+                        if (!isStaticInteractive) return;
+                        if (sp.isUnlocked) {
+                          sound.coin();
+                          onSelectLevel(sp.levelId);
+                        } else {
+                          sound.hit();
+                          onInspectLockedLevel(sp.prog);
+                        }
+                      }}
+                      title={`${sp.lvl.name} — ${sp.regionNote} (${
+                        sp.isSelected
+                          ? 'Zvolená výprava'
+                          : sp.isCompleted
+                          ? 'Pokořeno'
+                          : sp.isUnlocked
+                          ? 'Otevřeno k výpravě'
+                          : `Zamčeno · ${sp.percent} %`
+                      })`}
+                    >
+                      <span className="lada-signpost-plank">
+                        <span className="lada-signpost-top-row">
+                          <span className="lada-signpost-num">
+                            {statusBadge} {sp.stageNum}. {sp.monthName}
+                          </span>
+                          <span className="lada-signpost-phase">
+                            {sp.phaseIcon} {sp.phaseLabel}
+                            {!sp.isUnlocked && sp.percent > 0 ? ` · ${sp.percent}%` : ''}
+                          </span>
+                        </span>
+                        <span className="lada-signpost-subtitle-row">
+                          {sp.shortTitle}
+                        </span>
+                        {walkSeasonFilter !== 'all' && (
+                          <span className="lada-signpost-boss-row">
+                            👑 {sp.lvl.finalBoss.name}
+                          </span>
+                        )}
+                      </span>
+                      <span className="lada-signpost-post" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div
@@ -1449,29 +1527,37 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               }`}
             >
               <div className="min-w-0 flex-1 text-left">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-[#6E3B1E]">
-                  Zvolená výprava:
+                <div className="flex items-center gap-1.5 flex-wrap text-xs font-extrabold uppercase tracking-wider text-[#6E3B1E]">
+                  <span>Zvolená výprava ({currentLevel.badge}):</span>
+                  <span className="px-1.5 py-0.2 rounded bg-[#F2E5C6] border border-[#1C1613] text-[#221B17]">
+                    {currentLevel.isNightLevel ? '🌙 Noční výprava' : '☀️ Denní výprava'}
+                  </span>
                 </div>
-                <div className="text-lg font-black text-[#221B17] leading-tight">
-                  {currentLevel.name}{' '}
-                  <span className="text-sm font-bold text-[#C83E2B]">
-                    · Hlavní postrach: {currentLevel.finalBoss.name}
+                <div className="text-base sm:text-lg font-black text-[#221B17] leading-tight mt-0.5">
+                  {currentLevel.name}
+                </div>
+                <div className="text-xs font-bold text-[#6E3B1E] leading-snug mt-0.5">
+                  {currentLevel.subtitle} ·{' '}
+                  <span className="font-extrabold text-[#C83E2B]">
+                    Hlavní postrach: {currentLevel.finalBoss.name}
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="lada-btn btn-small"
-                style={{ margin: 0, background: '#4D784E', color: '#F6EBD8' }}
-                onClick={() => {
-                  if (!isStaticInteractive) return;
-                  ladaPageFoley.playFullPageTurn(0);
-                  sound.coin();
-                  onProceedToHunters();
-                }}
-              >
-                Vybrat lovce →
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  className="lada-btn btn-small"
+                  style={{ margin: 0, background: '#4D784E', color: '#F6EBD8' }}
+                  onClick={() => {
+                    if (!isStaticInteractive) return;
+                    ladaPageFoley.playFullPageTurn(0);
+                    sound.coin();
+                    onProceedToHunters();
+                  }}
+                >
+                  Vybrat lovce →
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1761,7 +1847,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             onClick={() => handleSwitchTab('map')}
           >
             <span className="lada-ribbon-stitch">
-              🗺️ Krajina za devatero horami
+              🗺️ Procházka po krajině
             </span>
           </button>
           <button
@@ -2099,7 +2185,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   <span className="flex-1 text-left">
                     <strong>„Vyrazit do kraje: {currentLevel.name}“</strong>
                     <small className="block opacity-80">
-                      Výběr lovce a odchod na 6minutovou výpravu
+                      Výběr lovce a odchod na 5minutovou výpravu
                     </small>
                   </span>
                 </button>

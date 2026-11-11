@@ -148,7 +148,17 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
       const extraArgs = m.id === 'cert' ? [true] : m.id === 'drak' ? [false, false] : [];
       const enemyToRender = tier >= 2 ? { ...m, semiVisible: false } : { ...m, palette: undefined, semiVisible: false };
 
-      drawEnemyRenderer(m.method, ctx, cx, cy + extraY, elapsed, 0, false, enemyToRender, extraArgs);
+      const bestiaryScale = m.radius > 45 ? 0.65 : m.radius > 32 ? 0.8 : 1.0;
+      if (bestiaryScale !== 1.0) {
+        ctx.save();
+        ctx.translate(cx, cy + extraY);
+        ctx.scale(bestiaryScale, bestiaryScale);
+        ctx.translate(-cx, -(cy + extraY));
+        drawEnemyRenderer(m.method, ctx, cx, cy + extraY, elapsed, 0, false, enemyToRender, extraArgs);
+        ctx.restore();
+      } else {
+        drawEnemyRenderer(m.method, ctx, cx, cy + extraY, elapsed, 0, false, enemyToRender, extraArgs);
+      }
       animId = requestAnimationFrame(render);
     };
 

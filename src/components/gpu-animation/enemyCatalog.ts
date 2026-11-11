@@ -224,17 +224,33 @@ export function getEnemySpriteDataUri(enemyId: string): string {
       const drawer = method ? (Lada as any)[method] : null;
 
       if (typeof drawer === 'function' || typeof drawEnemyRenderer === 'function') {
+        const isBoss = Boolean((def as any)?.isBoss || (def as any)?.isMiniboss || def?.category === 'bosses');
+        const canvasSize = 144;
+        const cx = 72;
+        const cy = isBoss ? 104 : 96;
         const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
         const ctx = canvas.getContext('2d');
 
         if (ctx) {
-          ctx.clearRect(0, 0, 128, 128);
+          ctx.clearRect(0, 0, canvasSize, canvasSize);
 
-          // Draw the enemy in neutral idle pose, anchored near bottom center (cx=64, cy=86)
+          // Fit large bosses cleanly into the 144x144 GPU texture while preserving full boss detail & outlines
+          const bakeScale = isBoss ? 0.56 : 0.92;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(bakeScale, bakeScale);
+          ctx.translate(-cx, -cy);
+
           if (typeof drawEnemyRenderer === 'function' && method) {
-            drawEnemyRenderer(method, ctx, 64, 86, 0, 0, false, {
+            drawEnemyRenderer(method, ctx, cx, cy, 0, 0, false, {
+              id: enemyId,
+              category: def?.category,
+              isBoss,
+              isMiniboss: Boolean((def as any)?.isMiniboss),
+              renderScale: enemyId === 'certova_babicka' ? 1.45 : enemyId === 'zakleta_princezna' ? 1.45 : 1.0,
+              furyStage: enemyId === 'certova_babicka' ? 3 : undefined,
               radius: def?.radius || 24,
               attackCadence: def?.attackCadence || 'normal',
               isAttacking: false,
@@ -242,8 +258,9 @@ export function getEnemySpriteDataUri(enemyId: string): string {
               recoveryTimer: 0,
             });
           } else if (typeof drawer === 'function') {
-            drawer(ctx, 64, 86, 0, 0, false);
+            drawer(ctx, cx, cy, 0, 0, false);
           }
+          ctx.restore();
 
           const dataUrl = canvas.toDataURL('image/png');
           // If valid data URL with content
@@ -275,8 +292,9 @@ export function getEnemyGpuConfig(enemyId: string): EnemyGpuConfig {
     name: enemyId,
     category: 'all',
   };
+  const isBoss = Boolean((def as any)?.isBoss || (def as any)?.isMiniboss || def?.category === 'bosses');
   const mapping = ENEMY_ARCHETYPE_MAP[enemyId] || {
-    archetype: 'runner' as EnemyArchetype,
+    archetype: (isBoss ? 'golem' : 'runner') as EnemyArchetype,
     accentColor: '#B45309',
   };
   const basePreset = ARCHETYPE_PRESETS[mapping.archetype] || ARCHETYPE_PRESETS.runner;
@@ -286,7 +304,10 @@ export function getEnemyGpuConfig(enemyId: string): EnemyGpuConfig {
   const squashX = mapping.squashX ?? basePreset.squashX;
   const squashY = mapping.squashY ?? basePreset.squashY;
   const derived = computeVolumePreservingStretch(squashX, squashY);
-  const baseScale = mapping.baseScale ?? basePreset.baseScale;
+  const rawBaseScale = mapping.baseScale ?? basePreset.baseScale;
+  const baseScale = isBoss ? Math.max(1.75, rawBaseScale) : rawBaseScale;
+  const width = isBoss ? Math.max(84, basePreset.width) : basePreset.width;
+  const height = isBoss ? Math.max(84, basePreset.height) : basePreset.height;
 
   const spriteUrl = getEnemySpriteDataUri(enemyId);
 
@@ -303,8 +324,8 @@ export function getEnemyGpuConfig(enemyId: string): EnemyGpuConfig {
       stretchX: derived.stretchX,
       stretchY: derived.stretchY,
       baseScale,
-      width: basePreset.width,
-      height: basePreset.height,
+      width,
+      height,
       speed: basePreset.speed,
       name: def.name || basePreset.name,
       description: basePreset.description,

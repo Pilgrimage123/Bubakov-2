@@ -79,7 +79,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   const [activeTab, setActiveTab] = useState<ControlsChapterId>('controls');
   const [controlsInputMode, setControlsInputMode] = useState<'touch' | 'keyboard' | 'gamepad'>(() => {
     if (typeof window === 'undefined') return 'touch';
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 840;
+    const isTouch = 'ontouchstart' in window || (typeof navigator !== 'undefined' && (navigator.maxTouchPoints || 0) > 0) || window.innerWidth <= 840;
     return isTouch ? 'touch' : 'keyboard';
   });
 

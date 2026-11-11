@@ -545,6 +545,11 @@ describe('Ladovské botanické dekorace a animované květy v menu a HUDu', () =
     expect(bookMarkup).toContain('Zvláštní schopnost [Mezerník]: Jízda na žernovu');
     expect(bookMarkup).toContain('po dobu 14 s je Krajánek nezranitelný');
     expect(bookMarkup).toContain('Hejno mrazivých vran');
+    expect(bookMarkup).toContain('Procházka po krajině');
+    expect(bookMarkup).not.toContain('Krajina za devatero horami');
+    expect(bookMarkup).toContain('1. Předjaří');
+    expect(bookMarkup).toContain('24. Únor');
+    expect(bookMarkup).toContain('Masopustní rej a basa');
     expect(bookMarkup).not.toContain('Mošna a poklady');
     expect(bookMarkup).not.toContain('Sběratelské album');
     expect(bookMarkup).not.toContain('Čáry a fortel');
