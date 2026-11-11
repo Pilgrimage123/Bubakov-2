@@ -15,13 +15,13 @@ V ústřední scéně hospody U Černého kocoura (`LadaCoverScene.tsx`) vznikl 
 
 2. **Trojjediná povaha hospodských bossů a reaktivní fáze**:
    Každý boss má jasně čitelnou folklórní náturu ze tří archetypů:
-   - *Rozšafní a bodří* (šibalské pomrkávání, úsměv od ucha k uchu, fajfky, korbele),
-   - *Komicky vzteklí a furiantští* (srostlé obočí do V, nadmuté rudé tváře, vyceněné tesáky, odfrkávání páry),
-   - *Zlomyslní a potměšilí* (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, skobovitý nos s bradavicí).
+   - *Rozšafní a bodří* (šibalské pomrkávání, úsměv od ucha k uchu, fajfky, korbele, pěnící tupláky – Hastrman, Rusalka, Koledující Bubák, Drak, Pan Zajíc, Bakchus s pivním soudkem),
+   - *Komicky vzteklí a furiantští* (srostlé obočí do V, nadmuté rudé tváře, vyceněné tesáky, odfrkávání páry – Skalní Obr, Hejkal, Čertovský Mlynář, Bezhlavý Rytíř, Morana),
+   - *Zlomyslní a potměšilí* (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, skobovitý nos s bradavicí – Mariášový Čert, Barbucha, Stará Ježibaba z Melechu, Povidlový Čert, Umrlec Basista).
    Všechny obličeje i rekvizity dynamicky reagují na stavy `windup` (Nápřah), `strike` (Úder) a `enraged` (< 50 % Kuráže).
 
 3. **Modularizace do `src/render/bosses/` a sjednocení signatur**:
-   Sdílené kreslicí primitivum Hospodského figurálního kánonu a sezónní moduly bossů jsou vyčleněny do `src/render/bosses/` a napojeny na `Lada` v `src/render/ladaRenderer.ts` se sjednocenou signaturou `(ctx, x, y, time, vx, panicked, attackInfo, enemy)`. Ve 24. úrovni (`levels.ts`) je `nocni_kobold` nahrazen kanonickým `masopustni_laufr`.
+   Sdílené kreslicí primitivum Hospodského figurálního kánonu a sezónní moduly bossů jsou vyčleněny do `src/render/bosses/` (`hospodaBossHelpers.ts`, `showcaseBosses.ts`, `hospodaBossesPart2.ts`) a napojeny na `Lada` v `src/render/ladaRenderer.ts` se sjednocenou signaturou `(ctx, x, y, time, vx, panicked, attackInfo, enemy)`. Ve 24. úrovni (`levels.ts`) je `nocni_kobold` nahrazen kanonickým `masopustni_laufr`.
 
 ## Důsledky
 

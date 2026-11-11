@@ -1,19 +1,24 @@
-## 2026-11-11 – Hospodský figurální kánon a demonstrace překreslení 6 bossů (ADR 0054)
+## 2026-11-11 – Hospodský figurální kánon a překreslení 16 bossů (ADR 0054)
 
-- **Architektura hospodského figurálního kánonu (`src/render/bosses/`, GLOSSARY.md, ADR 0054)**:
+- **Rozšíření hospodského figurálního kánonu o dalších 10 klíčových bossů (`src/render/bosses/hospodaBossesPart2.ts`, `src/render/ladaRenderer.ts`)**:
+  - **Půlnoční Hejkal (`drawHejkal`)**: Komicky vzteklý lesní štamgast bouchající sukovicí do stolu: mechový kožich, březová vestička s černými čárkami a šiškami, rozčepýřené jehličí, vykulená žlutá kukadla a dokořán rozevřená tlama hejkalovského ryku s funící lesní parou.
+  - **Čertovský Mlynář (`drawMlynar`)**: Rozšafný pomoučněný mlynář od hrusického náhonu: točící se dřevěné mlýnské kolo na zádech s odstřikujícími kapkami vody, moučná sázecí lopata, dýmající hliněná fajfka a chlupatý čertovský ocas s červeným bodcem vykukující zpod bílé zástěry.
+  - **Bezhlavý Rytíř (`drawBezhlavyRytir`)**: Furiantský rytíř ze zříceniny Hlásky: plechové brnění s červenobílým hrusickým erbem a vlajícím sametovým pláštěm, čistý límec s dýmajícím otvorem bez hlavy a v podpaží nesená rytířská přilbice s pavím perem, ze které vykukují mrkající veselé oči a rudý nos.
+  - **Tříhlavý líný Drak (`drawDrak`)**: Autentický rozšafný drak z Ladových pohádek: tlusté zelené tělo s žlutým bříškem a hnědými puntíky, bačkory na tlapkách, kostkovaný hospodský bryndák; levá hlava spí s fajfkou, střední se culí s vypláznutým jazykem a pravá furiantsky prská jiskry a saze.
+  - **Pan Zajíc z březového háje (`drawPanZajic`)**: Rozšafný velikonoční zajíc gentleman v nedělním svátečním šatu: zelený myslivecký frak, okrová vesta s řetízkem zlatých hodinek, červený puntíkovaný motýlek, kulaté drátěné brýle na čumáčku, proutěná nůše plná malovaných kraslic a karotková vycházková hůlka.
+  - **Morana, špatně vynesená smrtka (`drawMorana`)**: Komicky vzteklá promáčená slaměná figura zimy, která odmítla utonout v potoce a přišla se ohřát k hospodským kamnům: snopy pšeničné slámy svázané pentlemi, náhrdelník z vyfouknutých vaječných skořápek (vejdunků), věneček z jeřabin a mokré březové pometlo.
+  - **Stará ježibaba z Melechu (`drawOldWitch`)**: Zlomyslná pohádková baba jaga z Ladových pohádek: červený šátek s bílými puntíky uvázaný pod bradou, zahnutý nos s chlupatou bradavicí, jediný křivý zub, květovaná sukně s černou kočkou vykukující z kapsy zástěry a březové koště.
+  - **Povidlový čert s měchačkou (`drawPovidlovyCert`)**: Zlomyslný pekelník upatlaný od švestkových povidel z hospodské kuchyně: uhlově černá srst zalitá fialovými povidly, kroucené rohy, dlouhý růžový jazyk a obří dřevěná měchačka s odkapávajícími hustými kapkami povidel.
+  - **Bakchus s pivním soudkem (`drawBakchusSPivnimSoudkem`)**: Král hospodského veselí a masopustních pitek: sedí obkročmo na dubovém sudu s železnými obručemi a vytékajícím pivem, furiantský břich, červený kabátec, věnec z chmelových šištic na hlavě a v ruce pozdvižený pěnící kameninový tuplák a jitrnice.
+  - **Umrlec basista (`drawUmrlecBasista`)**: Furiantský hospodský muzikant ze záhrobí z Ladových kreseb masopustních tancovaček: vybělená lebka s rozverným úsměvem a doutníčkem, otlučený černý cylindr s červenou stuhou, smuteční frak se šosy, velká dřevěná basa s koňským smyčcem a vznášející se hudební noty.
+- **Architektura hospodského figurálního kánonu a první šestice bossů (`src/render/bosses/`, GLOSSARY.md, ADR 0054)**:
   - Kodifikován **Hospodský figurální kánon** a trojice povah hospodských bossů (*Rozšafní a bodří*, *Komicky vzteklí a furiantští*, *Zlomyslní a potměšilí*).
-  - Vytvořen modul `src/render/bosses/hospodaBossHelpers.ts` s nulovou per-frame paměťovou alokací (odstraněny alokace `createRadialGradient` a `createLinearGradient`), bezpečnou normalizací orientace `dir` a stavů `resolveBossState`, a procedurálními pomocníky pro lekníny, blatouchy, kapky vody a komické obláčky hněvu.
+  - Vytvořen modul `src/render/bosses/hospodaBossHelpers.ts` s nulovou per-frame paměťovou alokací (odstraněny alokace `createRadialGradient` a `createLinearGradient`), bezpečnou normalizací orientace `dir` a stavů `resolveBossState`, a procedurálními pomocníky pro lekníny, blatouchy, kapky vody, kameninové tupláky, chmelové šištice, noty a komické obláčky hněvu.
   - Odstraněna signaturní anomálie parametru `vx` vs `scale` – bossové se při pohybu doleva (`vx < 0`) již nikdy nepřevrací hlavou dolů.
-- **Překreslení 6 klíčových bossů v plné kvalitě (`src/render/bosses/showcaseBosses.ts`, `src/render/ladaRenderer.ts`)**:
-  - **Hastrman (`drawHastrman`)**: Přímá adaptace kanonického vodníka z `LadaCoverScene`: červená pletená čepice s bambulí a blatouchy, orobinec, smaragdový frak s červeným lemováním a kapajícím šosem, žlutá vesta se zlatými knoflíky, fajfka se zlatou rybičkou a mosazným víčkem a vrbový prut lashingující v aréně.
-  - **Rusalka (`drawRusalka`)**: Zlaté vlnité vlasy protkané rákosím, leknínová koruna ze tří rozkvetlých leknínů a orobince, sun-kissed pleť v tříčtvrtečním profilu, velké blankytné oko s dlouhými řasami, akvamarínové splývavé šaty s rozparkem a vznášející se vodní koule.
-  - **Koledující Bubák (`drawKoledujiciBubak`)**: Bodrý velikonoční hospodský šibal: břichaté zelené tělíčko s pupíkem, červené kšandy se stříbrnými přezkami, záplatované pytlovinové kraťasy, bosé 4prsté tlapy s drápky, puntíkovaný šátek, černý klobouk s vlajícími stuhami, proutěný košík s kraslicemi a spletená pomlázka.
-  - **Skalní Obr (`drawObr`)**: Komicky vzteklý obr ze Sázavy: mohutné svalnaté kamenné tělo, ovčí vesta s křížkovými stehy a červenou podšívkou, funící pára z uší při vzteku, mohutný borovicový kmen držený obouruč a útoky úderem do země.
-  - **Čert (`drawCert`)**: Klasický mariášový čert podle Ladových pohádek: uhelná srst, kroucené rohy s rýhami, červená vesta se zlatými knoflíky, švihající ocas s bodcem, kopyta a kovářské vidle thrustující při výpadu.
-  - **Barbucha (`drawBarbucha`)**: Plně deterministický render bez alokací (`zero CanvasGradient / Math.random`): nadýchané kvašové kouřové laloky s tušovými konturami, rozježená černá kštice, mrkvový nos, zubatý úsměv s růžovým jazykem a černé drápy reagující na útok.
-- **Nová testovací sada (`tests/hospodaBossesShowcase.test.ts`)**:
-  - 4 komplexní testy ověřující bezchybné vykreslení všech 6 bossů, nulové alokace gradientů, zachování kladného vertikálního měřítka při `vx < 0` a stack balance.
-  - Celkově 109 testovacích souborů (1 033 testů) prochází zeleně a Vite produkční sestavení je plně čisté.
+  - Překresleno prvních 6 klíčových bossů: Hastrman (`drawHastrman`), Rusalka (`drawRusalka`), Koledující Bubák (`drawKoledujiciBubak`), Skalní Obr (`drawObr`), Čert (`drawCert`), Barbucha (`drawBarbucha`).
+- **Nové testovací sady (`tests/hospodaBossesShowcase.test.ts`, `tests/hospodaBossesBatch2.test.ts`)**:
+  - Celkem 9 komplexních testů ověřujících bezchybné vykreslení všech 16 bossů, nulové alokace gradientů, zachování kladného vertikálního měřítka při `vx < 0` a stack balance.
+  - Celkově 113 testovacích souborů (1 066 testů) prochází zeleně a Vite produkční sestavení je plně čisté.
 
 ## 2026-11-09 – Čertova babička (ADR 0051), Zakletá princezna (ADR 0052) a Kinematika Čertova dědečka (ADR 0053)
 

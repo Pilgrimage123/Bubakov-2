@@ -413,3 +413,236 @@ export function drawFuriantSteamPuffs(
   }
   ctx.restore();
 }
+
+/**
+ * Draws a traditional Czech salt-glazed stoneware or ceramic beer stein (kameninový tuplák)
+ * with a billowing frothy head of beer foam and arched ear handle.
+ */
+export function drawFoamingBeerMug2D(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number = 1.0,
+  tilt: number = 0,
+  foamWave: number = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (tilt !== 0) ctx.rotate(tilt);
+  ctx.scale(size, size);
+
+  // 1. Stoneware Mug Body
+  ctx.fillStyle = '#E5E7EB';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  safeRoundRect(ctx, -10, -4, 20, 24, 2.5);
+  ctx.fill();
+  ctx.stroke();
+
+  // Cobalt blue folk stripe & tavern seal on stoneware
+  ctx.fillStyle = '#2563EB';
+  ctx.beginPath();
+  ctx.rect(-9, 4, 18, 5);
+  ctx.fill();
+
+  ctx.fillStyle = '#1D4ED8';
+  ctx.beginPath();
+  ctx.arc(0, 6.5, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(0, 6.5, 1.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ceramic Mug Ear Handle
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(12, 8, 7.5, -Math.PI * 0.45, Math.PI * 0.45);
+  ctx.stroke();
+  ctx.strokeStyle = '#D1D5DB';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  // 2. Foaming White Beer Head (Nadýchaná čepice piva)
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.0;
+
+  // Multiple fluffy overlapping foam lobes
+  const lobes = [
+    [-9, -5 + Math.sin(foamWave * 3) * 1.2, 5.5],
+    [-3, -8 + Math.cos(foamWave * 3) * 1.5, 6.5],
+    [4, -7 + Math.sin(foamWave * 3 + 1) * 1.4, 6.0],
+    [9, -4 + Math.cos(foamWave * 3 + 1) * 1.1, 5.0],
+    [0, -11 + Math.sin(foamWave * 4) * 1.6, 7.0],
+  ];
+
+  for (const [lx, ly, lr] of lobes) {
+    ctx.beginPath();
+    ctx.arc(lx, ly, lr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Creamy foam dollop dripping down mug front
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(-4, -1);
+  ctx.quadraticCurveTo(-4, 7 + Math.sin(foamWave * 2) * 2, -2, 7 + Math.sin(foamWave * 2) * 2);
+  ctx.quadraticCurveTo(0, 7 + Math.sin(foamWave * 2) * 2, 0, -1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Draws a stylized green hop cone (chmelová šištice) for wreaths and tavern decorations.
+ */
+export function drawHopCone2D(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number = 1.0,
+  angle: number = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (angle !== 0) ctx.rotate(angle);
+  ctx.scale(size, size);
+
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+
+  // Tiered green hop bract scales
+  const tiers = [
+    [-6, -4, '#65A30D'],
+    [0, -7, '#84CC16'],
+    [6, -4, '#65A30D'],
+    [-5, 1, '#4D7C0F'],
+    [0, -1, '#65A30D'],
+    [5, 1, '#4D7C0F'],
+    [-3, 6, '#3F6212'],
+    [3, 6, '#3F6212'],
+    [0, 10, '#365314'],
+  ];
+
+  for (const [bx, by, col] of tiers) {
+    ctx.fillStyle = col as string;
+    ctx.beginPath();
+    ctx.arc(bx as number, by as number, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Small hop stem
+  ctx.strokeStyle = '#365314';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(0, -7);
+  ctx.lineTo(0, -12);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Draws a flying folk music note floating up from village pub musicians.
+ */
+export function drawMusicNote2D(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  noteType: 0 | 1 = 0,
+  size: number = 1.0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size, size);
+
+  ctx.fillStyle = HOSPODA_INK;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+
+  if (noteType === 0) {
+    // Single eighth note (osminová nota)
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 3.5, 2.6, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(2.5, 0);
+    ctx.lineTo(2.5, -12);
+    ctx.quadraticCurveTo(5, -10, 8, -6);
+    ctx.stroke();
+  } else {
+    // Double beamed eighth note (dvě spojené noty)
+    ctx.beginPath();
+    ctx.ellipse(-5, 0, 3.0, 2.2, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(5, -1, 3.0, 2.2, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-3, 0);
+    ctx.lineTo(-3, -12);
+    ctx.moveTo(7, -1);
+    ctx.lineTo(7, -13);
+    ctx.moveTo(-3.5, -12);
+    ctx.lineTo(7.5, -13);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draws a rustic straw bundle (snop slámy) with binding ribbon for Morana.
+ */
+export function drawStrawBundle2D(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  wave: number = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Straw stalks
+  ctx.strokeStyle = '#EAB308';
+  ctx.lineWidth = 2.4;
+  for (let i = -w * 0.45; i <= w * 0.45; i += 3.5) {
+    const sw = Math.sin(wave + i * 0.2) * 2.5;
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i + sw, h);
+    ctx.stroke();
+  }
+
+  // Darker golden under-straw
+  ctx.strokeStyle = '#CA8A04';
+  ctx.lineWidth = 1.4;
+  for (let i = -w * 0.4; i <= w * 0.4; i += 4.0) {
+    const sw = Math.cos(wave + i * 0.3) * 2.0;
+    ctx.beginPath();
+    ctx.moveTo(i + 1, 0);
+    ctx.lineTo(i + sw + 1, h);
+    ctx.stroke();
+  }
+
+  // Red folk ribbon binding the bundle
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  safeRoundRect(ctx, -w * 0.5, h * 0.35, w, 5.5, 2.0);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
