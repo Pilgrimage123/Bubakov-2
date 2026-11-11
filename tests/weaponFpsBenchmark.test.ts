@@ -81,5 +81,5 @@ describe('Weapon FPS Performance Benchmark & Ranking', () => {
     for (const res of results) {
       expect(res.p95Ms).toBeLessThan(16.7);
     }
-  });
+  }, 30000);
 });

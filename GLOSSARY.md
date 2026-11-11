@@ -535,6 +535,23 @@ _Avoid_: geometrické placeholder sprity, ploché kruhové hlavy bez mimiky, tem
 Trojjediná škála pohádkové mimiky bossů v Hospodském figurálním kánonu, dělící protivníky podle jejich folklórní nátury na **rozšafné a bodré** (šibalské pomrkávání, úsměv od ucha k uchu, bafání z fajfky či připíjení), **komicky vzteklé** (rudé nadmuté tváře, srostlé huňaté obočí do V, vyceněné tesáky, odfrkávání páry či prskání) a **zlomyslné a potměšilé** (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, potutelné chichotání a zákeřné číhání).
 _Avoid_: jednotvárný výraz, vážný hororový patos, bezvýrazné obličeje
 
+**Štokrle**:
+Třínohá medově dubová lidová stolička s viditelnými léty dřeva a hranatými čepy; slouží jako erbovní hospodské sezení Hastrmana a v bojových situacích jako telegrafický dopadový prvek či vržená rekvizita.
+_Avoid_: židle, stolička, taburet, barová židle
+
+**Mariášový karbaník**:
+Pekelné strašidlo v červeném fráčku s černými klopami a kozím kopytem, jež své útoky a kouzla odvozuje z vykládání a vrhání mariášových karet se žaludy, srdci a zelenými listy.
+_Avoid_: kouzelník, gambler, karetní démon, čaroděj
+
+**Kovářská zástěra**:
+Těžký ochranný oděv z hrubé vydělané kůže s kovovými nýty a opaskem, charakteristický pro Skalního Obra a další furiantské hromotluky v hospodských potyčkách.
+_Avoid_: kožená vesta, brnění, zbroj
+
+**Černá žihadla**:
+Dlouhé, tenké, rovné a jehlově špičaté uhelné drápy vystřelované Strachem nacpaným Barbuchou z dýmových vírů jeho těla směrem k lovci; nemají žádnou spojitost s kominickými pomůckami.
+_Avoid_: kominická štětka, kouřové šlahouny, stínová chapadla, drápy
+
+
 
 
 
