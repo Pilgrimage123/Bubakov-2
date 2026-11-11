@@ -1841,15 +1841,15 @@ var Lada = {
 
 		// Rising curly puffs of pipe smoke
 		const smokeTime = time * 2.5;
-		const puff1Phase = (smokeTime) % 1;
-		const puff2Phase = (smokeTime + 0.35) % 1;
-		const puff3Phase = (smokeTime + 0.7) % 1;
+		const puff1Phase = ((smokeTime % 1) + 1) % 1;
+		const puff2Phase = (((smokeTime + 0.35) % 1) + 1) % 1;
+		const puff3Phase = (((smokeTime + 0.7) % 1) + 1) % 1;
 
 		const drawSmokePuff = (phase: number, seed: number) => {
 			const px = 16 + Math.sin(smokeTime * 2 + seed) * 3 - phase * 8;
 			const py = -31 - phase * 22;
-			const pr = 2.2 + phase * 4.5;
-			const alpha = (1 - phase) * 0.75;
+			const pr = Math.max(0, 2.2 + phase * 4.5);
+			const alpha = Math.max(0, Math.min(1, (1 - phase) * 0.75));
 			ctx.fillStyle = `rgba(240, 248, 255, ${alpha})`;
 			ctx.strokeStyle = `rgba(30, 27, 24, ${alpha * 0.5})`;
 			ctx.lineWidth = 1;

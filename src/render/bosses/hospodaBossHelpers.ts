@@ -358,25 +358,27 @@ export function drawFlatGouacheSmokeLobe(
   highlightColor: string = '#FFFDF7',
   lineWidth: number = 2.4
 ): void {
+  const safeR = Math.max(0, r);
+  if (safeR <= 0) return;
   // 1. Base shaded gouache circle with India ink outline
   ctx.fillStyle = baseColor;
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = lineWidth;
   ctx.beginPath();
-  ctx.arc(lx, ly, r, 0, Math.PI * 2);
+  ctx.arc(lx, ly, safeR, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // 2. Mid-tone inner puff
   ctx.fillStyle = midColor;
   ctx.beginPath();
-  ctx.arc(lx - r * 0.1, ly - r * 0.12, r * 0.78, 0, Math.PI * 2);
+  ctx.arc(lx - safeR * 0.1, ly - safeR * 0.12, Math.max(0, safeR * 0.78), 0, Math.PI * 2);
   ctx.fill();
 
   // 3. Crisp upper-left gouache highlight
   ctx.fillStyle = highlightColor;
   ctx.beginPath();
-  ctx.ellipse(lx - r * 0.26, ly - r * 0.28, r * 0.44, r * 0.3, -0.35, 0, Math.PI * 2);
+  ctx.ellipse(lx - safeR * 0.26, ly - safeR * 0.28, Math.max(0, safeR * 0.44), Math.max(0, safeR * 0.3), -0.35, 0, Math.PI * 2);
   ctx.fill();
 }
 
