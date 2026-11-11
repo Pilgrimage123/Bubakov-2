@@ -89,6 +89,7 @@ export function createFallbackBenchmarkContext(width: number, height: number): C
     arc: () => {},
     ellipse: () => {},
     rect: () => {},
+    roundRect: () => {},
     bezierCurveTo: () => {},
     quadraticCurveTo: () => {},
     setLineDash: () => {},

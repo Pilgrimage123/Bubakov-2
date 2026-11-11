@@ -58,6 +58,8 @@ This directory records architectural decisions made for the project Bubákov.
 | [0051](0051-certova-babicka-ohrada-z-mouky-a-bezedny-pekac.md) | Čertova babička, Ohrada z mouky a uhlí a Babiččin bezedný pekáč |
 | [0052](0052-zakleta-princezna-nocni-odkleti-a-kralovske-veno.md) | Zakletá princezna, Hřbitovní plot se svícemi a Královské věno |
 | [0053](0053-kinematika-vizual-a-animovane-stavy-certova-dedecka.md) | Kinematika, vizuální kodex a animované stavy Čertova dědečka s nůší |
+| [0054](0054-hospodsky-figuralni-kanon-bossu.md) | Hospodský figurální kánon a trojjediná povaha bossů |
+
 
 
 

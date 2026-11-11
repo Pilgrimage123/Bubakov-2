@@ -1,3 +1,20 @@
+## 2026-11-11 – Hospodský figurální kánon a demonstrace překreslení 6 bossů (ADR 0054)
+
+- **Architektura hospodského figurálního kánonu (`src/render/bosses/`, GLOSSARY.md, ADR 0054)**:
+  - Kodifikován **Hospodský figurální kánon** a trojice povah hospodských bossů (*Rozšafní a bodří*, *Komicky vzteklí a furiantští*, *Zlomyslní a potměšilí*).
+  - Vytvořen modul `src/render/bosses/hospodaBossHelpers.ts` s nulovou per-frame paměťovou alokací (odstraněny alokace `createRadialGradient` a `createLinearGradient`), bezpečnou normalizací orientace `dir` a stavů `resolveBossState`, a procedurálními pomocníky pro lekníny, blatouchy, kapky vody a komické obláčky hněvu.
+  - Odstraněna signaturní anomálie parametru `vx` vs `scale` – bossové se při pohybu doleva (`vx < 0`) již nikdy nepřevrací hlavou dolů.
+- **Překreslení 6 klíčových bossů v plné kvalitě (`src/render/bosses/showcaseBosses.ts`, `src/render/ladaRenderer.ts`)**:
+  - **Hastrman (`drawHastrman`)**: Přímá adaptace kanonického vodníka z `LadaCoverScene`: červená pletená čepice s bambulí a blatouchy, orobinec, smaragdový frak s červeným lemováním a kapajícím šosem, žlutá vesta se zlatými knoflíky, fajfka se zlatou rybičkou a mosazným víčkem a vrbový prut lashingující v aréně.
+  - **Rusalka (`drawRusalka`)**: Zlaté vlnité vlasy protkané rákosím, leknínová koruna ze tří rozkvetlých leknínů a orobince, sun-kissed pleť v tříčtvrtečním profilu, velké blankytné oko s dlouhými řasami, akvamarínové splývavé šaty s rozparkem a vznášející se vodní koule.
+  - **Koledující Bubák (`drawKoledujiciBubak`)**: Bodrý velikonoční hospodský šibal: břichaté zelené tělíčko s pupíkem, červené kšandy se stříbrnými přezkami, záplatované pytlovinové kraťasy, bosé 4prsté tlapy s drápky, puntíkovaný šátek, černý klobouk s vlajícími stuhami, proutěný košík s kraslicemi a spletená pomlázka.
+  - **Skalní Obr (`drawObr`)**: Komicky vzteklý obr ze Sázavy: mohutné svalnaté kamenné tělo, ovčí vesta s křížkovými stehy a červenou podšívkou, funící pára z uší při vzteku, mohutný borovicový kmen držený obouruč a útoky úderem do země.
+  - **Čert (`drawCert`)**: Klasický mariášový čert podle Ladových pohádek: uhelná srst, kroucené rohy s rýhami, červená vesta se zlatými knoflíky, švihající ocas s bodcem, kopyta a kovářské vidle thrustující při výpadu.
+  - **Barbucha (`drawBarbucha`)**: Plně deterministický render bez alokací (`zero CanvasGradient / Math.random`): nadýchané kvašové kouřové laloky s tušovými konturami, rozježená černá kštice, mrkvový nos, zubatý úsměv s růžovým jazykem a černé drápy reagující na útok.
+- **Nová testovací sada (`tests/hospodaBossesShowcase.test.ts`)**:
+  - 4 komplexní testy ověřující bezchybné vykreslení všech 6 bossů, nulové alokace gradientů, zachování kladného vertikálního měřítka při `vx < 0` a stack balance.
+  - Celkově 109 testovacích souborů (1 033 testů) prochází zeleně a Vite produkční sestavení je plně čisté.
+
 ## 2026-11-09 – Čertova babička (ADR 0051), Zakletá princezna (ADR 0052) a Kinematika Čertova dědečka (ADR 0053)
 
 - **Čertova babička, Ohrada z mouky a Babiččin bezedný pekáč (`src/game/director.ts`, `src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0051)**:

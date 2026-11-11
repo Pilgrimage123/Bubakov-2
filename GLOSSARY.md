@@ -527,6 +527,15 @@ _Avoid_: generické XP koule, svítící krystaly, beztvaré hromádky
 Dramatické varování před vyčerpáním Kuráže stylizované do zažloutlého knižního okraje s tužkovým šrafováním na rozích, doplněné o komické kapky potu a poplašený dým z fajfky lovce.
 _Avoid_: krvavá viněta, červené blikání obrazovky, moderní low-health efekt
 
+**Hospodský figurální kánon**:
+Autorský výtvarný standard veškerých bossů a velitelů odvozený z ústřední scény v hospodě U Černého kocoura (Hastrman, Hospodský Bubák a Rusalka). Vyznačuje se vícevrstvou kresbou živých obličejů (bělmo, barevná duhovka, zornička s odleskem, mrkající víčka, huňaté obočí, lesklý baňatý nos s pihami, tváře s bílým leskem a zubatá ústa s jazykem či strništěm), bohatým lidovým oděvem s barevným lemováním, křížkovými záplatami, kšandami a botanickými ozdobami, artikulovanými prsty na rukou i nohou a živou sekundární akcí (odkapávající kapky, kroužky dýmu, vlající pentle) při zachování čistých plochých kvašových polygonů a tušové linky.
+_Avoid_: geometrické placeholder sprity, ploché kruhové hlavy bez mimiky, temné generické fantasy
+
+**Povaha hospodských bossů**:
+Trojjediná škála pohádkové mimiky bossů v Hospodském figurálním kánonu, dělící protivníky podle jejich folklórní nátury na **rozšafné a bodré** (šibalské pomrkávání, úsměv od ucha k uchu, bafání z fajfky či připíjení), **komicky vzteklé** (rudé nadmuté tváře, srostlé huňaté obočí do V, vyceněné tesáky, odfrkávání páry či prskání) a **zlomyslné a potměšilé** (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, potutelné chichotání a zákeřné číhání).
+_Avoid_: jednotvárný výraz, vážný hororový patos, bezvýrazné obličeje
+
+
 
 
 
