@@ -21,7 +21,7 @@ Pokud hráč díru do 15 sekund nezapečetí, díra exploduje kouřem a vystoup�
 - **Vznášení**: Beznohá kouřová entita plující vzduchem, ignorující nízké překážky na zemi (ploty, pařezy, louže).
 - **Škálování strachem**: Jeho počáteční velikost a útočnost je nepřímo úměrná aktuální Kuráži lovce v okamžiku probuzení – čím větší strach (méně Kuráže) lovec má, tím je Barbucha větší (až 1,7×) a zuřivější.
 - **Mechanika vyfukování**: Zásahy zbraní lovce Barbuchu postupně „vyfukují“ (zmenšují jeho měřítko až na 0,6×) a zbavují ho zuřivosti. Při každém zásahu uvolňuje obláčky kouře a sazí. Při 0 Kuráži se s komickým citoslovcem „PUF!“ neškodně rozplyne.
-- **Střelba žihadel (drápy)**: Barbucha s telegrafovaným nápřahem střílí své ostré černé drápy:
+- **Střelba žihadel (dlouhé drápy jako součást rukou)**: Z Barbuchova kouřového těla vyrůstají dvě dýmové paže zakončené dlaněmi, jejichž prsty přímo přecházejí v **dlouhé ostré černé drápy (žihadla)**. S telegrafovaným nápřahem (`isWindup`) Barbucha roztáhne prsty a při úderu (`isStrike`) z jeho rukou tyto dlouhé drápy vystřelují vpřed jako letící černé ostny:
   - Ve velké podobě (>50 % Kuráže): Všesměrová kruhová salva 8–10 žihadel do 360°.
   - Ve vyfouknuté podobě (≤50 % Kuráže): Směrový vějíř 5 žihadel mířených na lovce.
   - Vystřelená žihadla fungují jako přímočaré ostré projektily a nezanechávají pasti v terénu (ochrana Snímkového rozpočtu).

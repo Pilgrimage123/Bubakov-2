@@ -11,6 +11,16 @@ import {
   drawHospodaPovidlovyCert,
   drawHospodaBakchusSPivnimSoudkem,
   drawHospodaUmrlecBasista,
+  drawHospodaBlatouch,
+  drawHospodaVodnicek,
+  drawHospodaStageCrow,
+  drawHospodaMeltingSnowman,
+  drawHospodaFrostGiant,
+  drawHospodaBeranek,
+  drawHospodaKlekanice,
+  drawHospodaBroomWitchZaspalka,
+  drawHospodaLedoviMuzi,
+  drawHospodaZbojnik,
 } from '../src/render/ladaRenderer';
 
 function createMockCanvasContext(): {
@@ -84,8 +94,8 @@ function createMockCanvasContext(): {
   };
 }
 
-describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => {
-  const bosses10 = [
+describe('ADR 0054 & ADR 0055: Hospodský figurální kánon - Dávky 2, 3 a 4 (20 bossů)', () => {
+  const bosses20 = [
     {
       name: 'Hejkal',
       render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
@@ -146,10 +156,70 @@ describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => 
         (Lada as any).drawUmrlecBasista(ctx, 100, 100, 2.0, vx, false, attackInfo),
       direct: drawHospodaUmrlecBasista,
     },
+    {
+      name: 'Blatouch',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawBlatouch(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaBlatouch,
+    },
+    {
+      name: 'Vodnicek',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawVodnicek(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaVodnicek,
+    },
+    {
+      name: 'StageCrow',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawStageCrow(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaStageCrow,
+    },
+    {
+      name: 'MeltingSnowman',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawMeltingSnowman(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaMeltingSnowman,
+    },
+    {
+      name: 'FrostGiant',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawFrostGiant(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaFrostGiant,
+    },
+    {
+      name: 'Beranek',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawBeranek(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaBeranek,
+    },
+    {
+      name: 'Klekanice',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawKlekanice(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaKlekanice,
+    },
+    {
+      name: 'BroomWitchZaspalka',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawBroomWitchZaspalka(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaBroomWitchZaspalka,
+    },
+    {
+      name: 'LedoviMuzi',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawLedoviMuzi(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaLedoviMuzi,
+    },
+    {
+      name: 'Zbojnik',
+      render: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any) =>
+        (Lada as any).drawZbojnik(ctx, 100, 100, 2.0, vx, false, attackInfo),
+      direct: drawHospodaZbojnik,
+    },
   ];
 
-  it('renders all 10 bosses cleanly across neutral, windup, and strike states', () => {
-    for (const b of bosses10) {
+  it('renders all 20 bosses cleanly across neutral, windup, and strike states', () => {
+    for (const b of bosses20) {
       const mock = createMockCanvasContext();
 
       // 1. Neutral state
@@ -181,8 +251,8 @@ describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => 
     }
   });
 
-  it('verifies ZERO per-frame CanvasGradient allocations across all 10 bosses', () => {
-    for (const b of bosses10) {
+  it('verifies ZERO per-frame CanvasGradient allocations across all 20 bosses', () => {
+    for (const b of bosses20) {
       const mock = createMockCanvasContext();
       b.render(mock.ctx, 1, undefined);
       b.render(mock.ctx, -1, { isActive: true, isStrike: true, strikeProgress: 0.5 });
@@ -190,8 +260,8 @@ describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => 
     }
   });
 
-  it('verifies vertical scale sy > 0 when facing left (vx < 0) for all 10 bosses', () => {
-    for (const b of bosses10) {
+  it('verifies vertical scale sy > 0 when facing left (vx < 0) for all 20 bosses', () => {
+    for (const b of bosses20) {
       const mock = createMockCanvasContext();
       b.render(mock.ctx, -1, undefined);
 
@@ -203,8 +273,8 @@ describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => 
     }
   });
 
-  it('maintains balanced canvas save and restore stack depth for all 10 bosses', () => {
-    for (const b of bosses10) {
+  it('maintains balanced canvas save and restore stack depth for all 20 bosses', () => {
+    for (const b of bosses20) {
       const mock = createMockCanvasContext();
       b.render(mock.ctx, 1, undefined);
       expect(mock.getSaveDepth()).toBe(0);
@@ -215,12 +285,139 @@ describe('ADR 0054: Hospodský figurální kánon - 10 dalších bossů', () => 
     }
   });
 
-  it('exports all 10 direct drawHospoda* functions from ladaRenderer', () => {
-    for (const b of bosses10) {
+  it('exports all 20 direct drawHospoda* functions from ladaRenderer', () => {
+    for (const b of bosses20) {
       expect(typeof b.direct).toBe('function');
       const mock = createMockCanvasContext();
       expect(() => b.direct(mock.ctx, 0, 0, 1, 1)).not.toThrow();
       expect(mock.getSaveDepth()).toBe(0);
     }
   });
+
+  it('distinguishes idle (vx === 0) from walk (vx !== 0) and handles enraged/hurt states for all 20 ADR 0055 bosses', () => {
+    const showcase20 = [
+      {
+        name: 'Hejkal',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaHejkal(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Mlynar',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaMlynar(ctx, 100, 100, 2.5, vx, false, Boolean(enemy?.enraged), attackInfo, enemy),
+      },
+      {
+        name: 'BezhlavyRytir',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaBezhlavyRytir(ctx, 100, 100, 2.5, vx, false, Boolean(enemy?.enraged), attackInfo, enemy),
+      },
+      {
+        name: 'Drak',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaDrak(ctx, 100, 100, 2.5, vx, false, Boolean(enemy?.enraged), undefined, attackInfo, enemy),
+      },
+      {
+        name: 'PanZajic',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaPanZajic(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Morana',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaMorana(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'OldWitch',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaOldWitch(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'PovidlovyCert',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaPovidlovyCert(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'BakchusSPivnimSoudkem',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaBakchusSPivnimSoudkem(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'UmrlecBasista',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaUmrlecBasista(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Blatouch',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaBlatouch(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Vodnicek',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaVodnicek(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'StageCrow',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaStageCrow(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'MeltingSnowman',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaMeltingSnowman(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'FrostGiant',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaFrostGiant(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Beranek',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaBeranek(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Klekanice',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaKlekanice(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'BroomWitchZaspalka',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaBroomWitchZaspalka(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'LedoviMuzi',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaLedoviMuzi(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+      {
+        name: 'Zbojnik',
+        draw: (ctx: CanvasRenderingContext2D, vx: number, attackInfo?: any, enemy?: any) =>
+          drawHospodaZbojnik(ctx, 100, 100, 2.5, vx, false, attackInfo, enemy),
+      },
+    ];
+
+    for (const b of showcase20) {
+      const mockIdle = createMockCanvasContext();
+      // Idle via effectiveVx = 1 but enemy.vx = 0 (as dispatched by ladaRenderer & AnimationTesterModal)
+      expect(() => b.draw(mockIdle.ctx, 1, undefined, { vx: 0 })).not.toThrow();
+      expect(mockIdle.getSaveDepth()).toBe(0);
+      expect(mockIdle.gradientCallCount()).toBe(0);
+
+      // Enraged + hurt state
+      const mockEnraged = createMockCanvasContext();
+      expect(() =>
+        b.draw(
+          mockEnraged.ctx,
+          -1,
+          { isActive: true, isStrike: true, strikeProgress: 0.4 },
+          { vx: -2.2, enraged: true, hurtTimer: 0.3 }
+        )
+      ).not.toThrow();
+      expect(mockEnraged.getSaveDepth()).toBe(0);
+      expect(mockEnraged.gradientCallCount()).toBe(0);
+    }
+  });
 });
+

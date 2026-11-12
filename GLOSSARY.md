@@ -564,28 +564,28 @@ Dramatické varování před vyčerpáním Kuráže stylizované do zažloutléh
 _Avoid_: krvavá viněta, červené blikání obrazovky, moderní low-health efekt
 
 **Hospodský figurální kánon**:
-Autorský výtvarný standard veškerých bossů a velitelů odvozený z ústřední scény v hospodě U Černého kocoura (Hastrman, Hospodský Bubák a Rusalka). Vyznačuje se vícevrstvou kresbou živých obličejů (bělmo, barevná duhovka, zornička s odleskem, mrkající víčka, huňaté obočí, lesklý baňatý nos s pihami, tváře s bílým leskem a zubatá ústa s jazykem či strništěm), bohatým lidovým oděvem s barevným lemováním, křížkovými záplatami, kšandami a botanickými ozdobami, artikulovanými prsty na rukou i nohou a živou sekundární akcí (odkapávající kapky, kroužky dýmu, vlající pentle) při zachování čistých plochých kvašových polygonů a tušové linky.
-_Avoid_: geometrické placeholder sprity, ploché kruhové hlavy bez mimiky, temné generické fantasy
+Autorský výtvarný standard veškerých bossů a velitelů odvozený z ústřední scény v hospodě U Černého kocoura (Hastrman, Hospodský Bubák a Rusalka). Vyznačuje se vícevrstvou kresbou živých obličejů (bělmo, barevná duhovka, zornička s odleskem, mrkající víčka, huňaté obočí, lesklý baňatý nos s pihami, tváře s bílým leskem a zubatá ústa s jazykem či strništěm), bohatým lidovým oděvem s barevným lemováním, křížkovými záplatami, kšandami a botanickými ozdobami, artikulovanými prsty na rukou i nohou a živou sekundární akcí (odkapávající kapky, kroužky dýmu, vlající pentle) při zachování čistých plochých kvašových polygonů a tušové linky. V bojové aréně strašidla a bossové přirozeně **nesedí na židli či štokrleti a nepijí pivo**, pokud to není výslovně vyžádáno jejich specifickou herní mechanikou – stojí a pohybují se v bojovém postoji a rukama ovládají své zbraně či drápy.
+_Avoid_: geometrické placeholder sprity, ploché kruhové hlavy bez mimiky, sezení na židli v aréně, popíjení piva v boji
 
 **Povaha hospodských bossů**:
-Trojjediná škála pohádkové mimiky bossů v Hospodském figurálním kánonu, dělící protivníky podle jejich folklórní nátury na **rozšafné a bodré** (šibalské pomrkávání, úsměv od ucha k uchu, bafání z fajfky či připíjení), **komicky vzteklé** (rudé nadmuté tváře, srostlé huňaté obočí do V, vyceněné tesáky, odfrkávání páry či prskání) a **zlomyslné a potměšilé** (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, potutelné chichotání a zákeřné číhání).
+Trojjediná škála pohádkové mimiky bossů v Hospodském figurálním kánonu, dělící protivníky podle jejich folklórní nátury na **rozšafné a bodré** (šibalské pomrkávání, úsměv od ucha k uchu, bafání z fajfky), **komicky vzteklé** (rudé nadmuté tváře, srostlé huňaté obočí do V, vyceněné tesáky, odfrkávání páry či prskání) a **zlomyslné a potměšilé** (přimhouřené šilhavé oči, křivý škleb s vyplazeným jazykem, potutelné chichotání a zákeřné číhání).
 _Avoid_: jednotvárný výraz, vážný hororový patos, bezvýrazné obličeje
 
 **Štokrle**:
-Třínohá medově dubová lidová stolička s viditelnými léty dřeva a hranatými čepy; slouží jako erbovní hospodské sezení Hastrmana a v bojových situacích jako telegrafický dopadový prvek či vržená rekvizita.
-_Avoid_: židle, stolička, taburet, barová židle
+Třínohá medově dubová lidová stolička s viditelnými léty dřeva a hranatými čepy; slouží výhradně jako hospodské sezení Hastrmana v úvodní scéně hospody (`LadaCoverScene.tsx`), zatímco v bojové aréně na ní Hastrman ani jiní nepřátelé nesedí.
+_Avoid_: židle v bojové aréně, sedící boss v aréně, barová židle
 
 **Mariášový karbaník**:
-Pekelné strašidlo v červeném fráčku s černými klopami a kozím kopytem, jež své útoky a kouzla odvozuje z vykládání a vrhání mariášových karet se žaludy, srdci a zelenými listy.
+Pekelné strašidlo v záplatované vestě s mariášovými kartami za pasem, řetězem se zámkem, jednou lidskou nohou v pruhované punčoše a druhou chlupatou kozlí nohou s kopytem, které v bojové aréně útočí přirozeným obouručním výpadem kovaným pekelným trojzubcem (vidlemi).
 _Avoid_: kouzelník, gambler, karetní démon, čaroděj
 
 **Kovářská zástěra**:
-Těžký ochranný oděv z hrubé vydělané kůže s kovovými nýty a opaskem, charakteristický pro Skalního Obra a další furiantské hromotluky v hospodských potyčkách.
-_Avoid_: kožená vesta, brnění, zbroj
+Těžký ochranný oděv z hrubé vydělané kůže či ovčího kožichu se širokým opaskem, charakteristický pro Skalního Obra a další furiantské hromotluky třímající v rukou dubový kyj.
+_Avoid_: brnění, zbroj, šipka nad obrem
 
 **Černá žihadla**:
-Dlouhé, tenké, rovné a jehlově špičaté uhelné drápy vystřelované Strachem nacpaným Barbuchou z dýmových vírů jeho těla směrem k lovci; nemají žádnou spojitost s kominickými pomůckami.
-_Avoid_: kominická štětka, kouřové šlahouny, stínová chapadla, drápy
+Dlouhé, ostré, jehlově špičaté černé drápy tvořící přímé prodloužení prstů na dýmových rukou Strachem nacpaného Barbuchy, které při útoku vystřelují z jeho dlaní vpřed jako letící černé ostny; nemají žádnou spojitost s kominickými pomůckami.
+_Avoid_: kominická štětka, kouřové šlahouny, stínová chapadla, oddělené levitující trojúhelníky
 
 
 

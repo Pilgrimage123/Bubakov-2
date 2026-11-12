@@ -32,6 +32,7 @@ export interface ResolvedBossState {
   isWindup: boolean;
   isStrike: boolean;
   isEnraged: boolean;
+  isHurt: boolean;
   windupProgress: number;
   strikeProgress: number;
   bob: number;
@@ -46,8 +47,8 @@ export interface ResolvedBossState {
 
 /**
  * Normalizes boss animation and combat state across all caller conventions
- * (arena dispatcher, Bestiary preview, and unit tests).
- * Explicitly prevents upside-down flipping when vx < 0!
+ * (arena dispatcher, Bestiary preview, AnimationTesterModal, and unit tests).
+ * Explicitly prevents upside-down flipping when vx < 0 and distinguishes idle (vx === 0) from walk (vx !== 0)!
  */
 export function resolveBossState(
   time: number,
@@ -56,9 +57,11 @@ export function resolveBossState(
   attackInfo?: EnemyAttackInfo | any,
   enemy?: any
 ): ResolvedBossState {
+  const t = time > 10000 ? time * 0.001 : time;
   const numVx = typeof vxOrDir === 'number' ? vxOrDir : 1;
   const dir: 1 | -1 = numVx < 0 ? -1 : 1;
-  const isMoving = Math.abs(numVx) > 0.05;
+  const rawVx = typeof enemy?.vx === 'number' ? enemy.vx : numVx;
+  const isMoving = Math.abs(rawVx) > 0.05;
   const isPanicked = Boolean(panicked);
 
   const target = enemy || attackInfo || {};
@@ -73,7 +76,8 @@ export function resolveBossState(
   const isStrike = Boolean(
     attackInfo?.isStrike ||
       target?.isStrike ||
-      (typeof attackInfo?.strikeProgress === 'number' && attackInfo.strikeProgress > 0)
+      (typeof attackInfo?.strikeProgress === 'number' && attackInfo.strikeProgress > 0) ||
+      (typeof target?.strikeTimer === 'number' && target.strikeTimer > 0)
   );
   const isAttacking = Boolean(
     isWindup ||
@@ -92,30 +96,38 @@ export function resolveBossState(
         target.hp <= target.maxHp * 0.5)
   );
 
+  const isHurt = Boolean(
+    (typeof target?.hurtTimer === 'number' && target.hurtTimer > 0) ||
+      target?.isHurt ||
+      attackInfo?.isHurt
+  );
+
   const windupProgress = clamp01(attackInfo?.windupProgress ?? (isWindup ? 0.75 : 0));
   const strikeProgress = clamp01(attackInfo?.strikeProgress ?? (isStrike ? 0.5 : 0));
 
   const walkFreq = isPanicked ? 18 : isEnraged ? 13 : 9;
-  const bob = Math.sin(time * walkFreq) * (isPanicked ? 3.5 : 2.2);
-  const stride = isMoving ? Math.sin(time * walkFreq) : Math.sin(time * 3.5) * 0.25;
+  const bob = isMoving
+    ? Math.sin(t * walkFreq) * (isPanicked ? 3.5 : 2.2)
+    : Math.sin(t * 2.8) * 1.1;
+  const stride = isMoving ? Math.sin(t * walkFreq) : 0;
 
-  let jawOpen = 0.55 + 0.15 * Math.sin(time * 4.8);
+  let jawOpen = 0.55 + 0.15 * Math.sin(t * 4.8);
   if (isStrike) {
     jawOpen = 1.0;
   } else if (isWindup) {
-    jawOpen = 0.8 + 0.18 * Math.sin(time * 10);
+    jawOpen = 0.8 + 0.18 * Math.sin(t * 10);
   } else if (isEnraged) {
-    jawOpen = 0.85 + 0.15 * Math.sin(time * 8);
+    jawOpen = 0.85 + 0.15 * Math.sin(t * 8);
   }
 
-  const tMod = ((time % 3.7) + 3.7) % 3.7;
+  const tMod = ((t % 3.7) + 3.7) % 3.7;
   const blinkWave = tMod > 3.54 ? Math.sin(((tMod - 3.54) / 0.16) * Math.PI) : 0;
-  const eyeSquint = isStrike ? 0.22 : isWindup ? 0.35 : blinkWave * 0.85;
+  const eyeSquint = isHurt ? 0.65 : isStrike ? 0.22 : isWindup ? 0.35 : blinkWave * 0.85;
 
-  const pupilShiftX = isStrike ? 1.8 : isWindup ? 1.5 : 1.0 + Math.sin(time * 2.4) * 0.65;
-  const pupilShiftY = isStrike ? -0.8 : isWindup ? -1.2 : Math.cos(time * 2.7) * 0.5;
-  const browLift = (isStrike ? 2.6 : isWindup ? 1.8 : 0.8) + Math.sin(time * 5.2) * 0.6;
-  const earWiggle = Math.sin(time * 6.5) * 0.08 + (isAttacking ? 0.14 : 0);
+  const pupilShiftX = isStrike ? 1.8 : isWindup ? 1.5 : 1.0 + Math.sin(t * 2.4) * 0.65;
+  const pupilShiftY = isStrike ? -0.8 : isWindup ? -1.2 : Math.cos(t * 2.7) * 0.5;
+  const browLift = (isStrike ? 2.6 : isWindup ? 1.8 : 0.8) + Math.sin(t * 5.2) * 0.6;
+  const earWiggle = Math.sin(t * 6.5) * 0.08 + (isAttacking ? 0.14 : 0);
 
   return {
     dir,
@@ -125,6 +137,7 @@ export function resolveBossState(
     isWindup,
     isStrike,
     isEnraged,
+    isHurt,
     windupProgress,
     strikeProgress,
     bob,
@@ -136,6 +149,274 @@ export function resolveBossState(
     browLift,
     earWiggle,
   };
+}
+
+/**
+ * Draws a 2-jointed articulated limb (shoulder -> elbow -> wrist) with 3-tier Ladovské gouache shading
+ * and an optional cuff or elbow crease. Zero allocations.
+ */
+export function drawArticulatedArm2D(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  ex: number,
+  ey: number,
+  wx: number,
+  wy: number,
+  upperWidth: number,
+  forearmWidth: number,
+  baseColor: string,
+  shadowColor: string,
+  highlightColor: string,
+  cuffColor?: string
+): void {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // 1. Upper arm (rameno -> loket)
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = upperWidth + 3.6;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+
+  ctx.strokeStyle = shadowColor;
+  ctx.lineWidth = upperWidth;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy + 0.6);
+  ctx.lineTo(ex, ey + 0.6);
+  ctx.stroke();
+
+  ctx.strokeStyle = baseColor;
+  ctx.lineWidth = Math.max(1.5, upperWidth - 1.4);
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - 0.3);
+  ctx.lineTo(ex, ey - 0.3);
+  ctx.stroke();
+
+  ctx.strokeStyle = highlightColor;
+  ctx.lineWidth = Math.max(0.9, upperWidth * 0.32);
+  ctx.beginPath();
+  ctx.moveTo(sx + (ex - sx) * 0.15, sy + (ey - sy) * 0.15 - upperWidth * 0.22);
+  ctx.lineTo(sx + (ex - sx) * 0.85, sy + (ey - sy) * 0.85 - upperWidth * 0.22);
+  ctx.stroke();
+
+  // Elbow joint rounding & cloth fold crease
+  ctx.fillStyle = baseColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(ex, ey, upperWidth * 0.52, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 2. Forearm (loket -> zápěstí)
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = forearmWidth + 3.4;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(wx, wy);
+  ctx.stroke();
+
+  ctx.strokeStyle = shadowColor;
+  ctx.lineWidth = forearmWidth;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey + 0.5);
+  ctx.lineTo(wx, wy + 0.5);
+  ctx.stroke();
+
+  ctx.strokeStyle = baseColor;
+  ctx.lineWidth = Math.max(1.4, forearmWidth - 1.3);
+  ctx.beginPath();
+  ctx.moveTo(ex, ey - 0.3);
+  ctx.lineTo(wx, wy - 0.3);
+  ctx.stroke();
+
+  ctx.strokeStyle = highlightColor;
+  ctx.lineWidth = Math.max(0.8, forearmWidth * 0.3);
+  ctx.beginPath();
+  ctx.moveTo(ex + (wx - ex) * 0.18, ey + (wy - ey) * 0.18 - forearmWidth * 0.2);
+  ctx.lineTo(ex + (wx - ex) * 0.82, ey + (wy - ey) * 0.82 - forearmWidth * 0.2);
+  ctx.stroke();
+
+  // Optional sleeve cuff at wrist
+  if (cuffColor) {
+    const ang = Math.atan2(wy - ey, wx - ex);
+    ctx.save();
+    ctx.translate(wx, wy);
+    ctx.rotate(ang);
+    ctx.fillStyle = cuffColor;
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    safeRoundRect(ctx, -3.5, -forearmWidth * 0.62, 5.2, forearmWidth * 1.24, 1.8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draws an anatomical hand with palm, opposable thumb, and 4 articulated fingers (or claws)
+ * firmly gripping a weapon shaft or gesturing at (wx, wy). Zero allocations.
+ */
+export function drawGrippingHand2D(
+  ctx: CanvasRenderingContext2D,
+  wx: number,
+  wy: number,
+  angleRad: number,
+  skinColor: string,
+  shadowColor: string,
+  palmRadius: number = 3.6,
+  clawColor?: string
+): void {
+  ctx.save();
+  ctx.translate(wx, wy);
+  ctx.rotate(angleRad);
+
+  // Palm base (dlaň)
+  ctx.fillStyle = skinColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, palmRadius * 1.05, palmRadius * 0.92, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner palm shadow
+  ctx.fillStyle = shadowColor;
+  ctx.beginPath();
+  ctx.arc(-palmRadius * 0.2, palmRadius * 0.2, palmRadius * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4 gripping fingers wrapped around the handle (4 prsty)
+  const fingerOffsets = [-1.45, -0.48, 0.48, 1.45];
+  for (let i = 0; i < 4; i++) {
+    const fy = fingerOffsets[i] * (palmRadius * 0.48);
+    const fx = palmRadius * 0.55;
+    ctx.fillStyle = skinColor;
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 1.45;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, palmRadius * 0.48, palmRadius * 0.28, 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (clawColor) {
+      ctx.fillStyle = clawColor;
+      ctx.beginPath();
+      ctx.moveTo(fx + palmRadius * 0.35, fy - palmRadius * 0.16);
+      ctx.lineTo(fx + palmRadius * 0.85, fy);
+      ctx.lineTo(fx + palmRadius * 0.35, fy + palmRadius * 0.16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  // Opposable thumb locking the grip from above (palec)
+  ctx.fillStyle = skinColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.55;
+  ctx.beginPath();
+  ctx.ellipse(palmRadius * 0.12, -palmRadius * 0.82, palmRadius * 0.56, palmRadius * 0.34, -0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Draws a rich multi-layered Josef Lada eye with sclera, shaded upper rim, colored iris,
+ * saccadic pupil, white catchlight, eyelid blink/squint, and expressive eyebrow.
+ */
+export function drawLadaExpressiveEye2D(
+  ctx: CanvasRenderingContext2D,
+  ex: number,
+  ey: number,
+  rx: number,
+  ry: number,
+  scleraColor: string,
+  irisColor: string,
+  pupilShiftX: number,
+  pupilShiftY: number,
+  eyeSquint: number,
+  browColor: string,
+  browTilt: number,
+  browLift: number
+): void {
+  ctx.save();
+  ctx.translate(ex, ey);
+
+  // Under-eye folk crease (podoční vráska)
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(0, ry * 0.35, rx * 0.95, 0.25, Math.PI - 0.25);
+  ctx.stroke();
+
+  // Sclera base
+  ctx.fillStyle = scleraColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.85;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Iris
+  const px = Math.max(-rx * 0.38, Math.min(rx * 0.38, pupilShiftX));
+  const py = Math.max(-ry * 0.35, Math.min(ry * 0.35, pupilShiftY));
+  ctx.fillStyle = irisColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.arc(px, py, Math.min(rx, ry) * 0.62, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Pupil
+  ctx.fillStyle = HOSPODA_INK;
+  ctx.beginPath();
+  ctx.arc(px, py, Math.min(rx, ry) * 0.36, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Specular catchlight (odlesk v oku)
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(px - rx * 0.22, py - ry * 0.22, Math.max(0.75, Math.min(rx, ry) * 0.22), 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyelid squint / blink cover
+  if (eyeSquint > 0.05) {
+    ctx.fillStyle = browColor;
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 1.5;
+    const lidY = -ry + ry * 2 * Math.min(0.92, eyeSquint);
+    ctx.beginPath();
+    ctx.ellipse(0, -ry * 0.45, rx * 1.02, Math.max(0.8, (lidY + ry) * 0.55), 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Expressive bushy eyebrow (obočí)
+  ctx.save();
+  ctx.translate(0, -ry - 2.2 - browLift * 0.45);
+  ctx.rotate(browTilt);
+  ctx.fillStyle = browColor;
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.65;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx * 1.25, Math.max(1.6, ry * 0.42), 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
 }
 
 /**

@@ -9,6 +9,9 @@ import {
   drawFlatGouacheSmokeLobe,
   drawFuriantSteamPuffs,
   drawMusicNote2D,
+  drawArticulatedArm2D,
+  drawGrippingHand2D,
+  drawLadaExpressiveEye2D,
   safeRoundRect,
 } from './hospodaBossHelpers';
 
@@ -31,7 +34,7 @@ export function drawHospodaBlatouch(
   enemy?: any
 ): void {
   const s = resolveBossState(time, vx, panicked, attackInfo, enemy);
-  const scale = 2.0;
+  const scale = 2.05;
 
   ctx.save();
   ctx.translate(x, y - s.bob);
@@ -39,235 +42,286 @@ export function drawHospodaBlatouch(
 
   if (s.isPanicked) {
     ctx.rotate(0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.07 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.11 * s.strikeProgress);
   }
 
-  // 1. Meadow Ground Shadow
+  // 1. Meadow Ground Shadow with Golden Pollen Specks
   ctx.save();
-  ctx.fillStyle = 'rgba(34, 85, 34, 0.25)';
+  ctx.fillStyle = 'rgba(34, 85, 34, 0.28)';
   ctx.beginPath();
-  ctx.ellipse(0, 18, 16, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 18.5, 16.5, 5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // 2. Bare Little Legs (Čiperné bosé nožky se 4 prstíky)
-  ctx.fillStyle = '#E8BE9B';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
-
-  const legL = Math.sin(time * 10) * 4;
+  // 2. Bare Little Legs (Čiperné bosé nožky se 4 prstíky, respektující klidový postoj vx === 0)
+  const legL = s.stride * 4.5;
   const legR = -legL;
 
-  // Left leg
-  ctx.beginPath();
-  ctx.moveTo(-6, 8);
-  ctx.lineTo(-7 + legL, 18);
-  ctx.lineTo(-2 + legL, 18);
-  ctx.lineTo(-3, 8);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  for (const side of [-1, 1]) {
+    const shift = side === -1 ? legL : legR;
+    const baseX = side * 4.5;
 
-  // Right leg
-  ctx.beginPath();
-  ctx.moveTo(3, 8);
-  ctx.lineTo(2 + legR, 18);
-  ctx.lineTo(7 + legR, 18);
-  ctx.lineTo(6, 8);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+    ctx.fillStyle = '#E8BE9B';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 1.9;
+    ctx.beginPath();
+    ctx.moveTo(baseX - 1.8, 8);
+    ctx.lineTo(baseX - 2.3 + shift, 18);
+    ctx.lineTo(baseX + 2.3 + shift, 18);
+    ctx.lineTo(baseX + 1.8, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-  // Tiny toes
-  ctx.fillStyle = '#D9A07A';
-  for (let i = 0; i < 3; i++) {
-    ctx.beginPath();
-    ctx.arc(-7 + legL + i * 2, 18, 1.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(3 + legR + i * 2, 18, 1.2, 0, Math.PI * 2);
-    ctx.fill();
+    // Inner leg shadow
+    ctx.fillStyle = '#D9A07A';
+    ctx.fillRect(baseX - 1.5 + shift * 0.5, 10, 1.3, 6.5);
+
+    // 4 tiny toes
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = '#E8BE9B';
+      ctx.beginPath();
+      ctx.arc(baseX - 2.2 + shift + i * 1.45, 18.2, 1.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
-  // 3. Patched Green Peasant Breeches & Suspenders (Záplatované kraťásky)
+  // 3. 3-Tier Gouache Patched Green Peasant Breeches & Suspenders (Záplatované kraťásky)
   ctx.fillStyle = '#3E6B27';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-9, 4);
-  ctx.lineTo(9, 4);
-  ctx.lineTo(8, 11);
-  ctx.lineTo(1, 10);
-  ctx.lineTo(0, 11);
-  ctx.lineTo(-1, 10);
-  ctx.lineTo(-8, 11);
+  ctx.moveTo(-9.5, 3.5);
+  ctx.lineTo(9.5, 3.5);
+  ctx.lineTo(8.5, 11.2);
+  ctx.lineTo(1.2, 10);
+  ctx.lineTo(0, 11.2);
+  ctx.lineTo(-1.2, 10);
+  ctx.lineTo(-8.5, 11.2);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Bright yellow patch on shorts
+  // Breeches shadow & highlight
+  ctx.fillStyle = '#2B4C1B';
+  ctx.fillRect(-8, 8.2, 16, 2.2);
+  ctx.fillStyle = '#538D34';
+  ctx.fillRect(-7.5, 4.3, 6, 1.8);
+
+  // Bright yellow patch on shorts with cross-stitching
   ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.rect(-6, 6, 4, 3.5);
+  ctx.rect(-6.5, 5.5, 4.5, 3.8);
   ctx.fill();
   ctx.stroke();
-  // Patch stitches
+
   ctx.strokeStyle = '#78350F';
   ctx.lineWidth = 1.0;
   ctx.beginPath();
-  ctx.moveTo(-6.5, 5.5); ctx.lineTo(-1.5, 10);
-  ctx.moveTo(-1.5, 5.5); ctx.lineTo(-6.5, 10);
+  ctx.moveTo(-7.0, 6.2);
+  ctx.lineTo(-5.8, 6.2);
+  ctx.moveTo(-7.0, 8.2);
+  ctx.lineTo(-5.8, 8.2);
+  ctx.moveTo(-2.6, 6.2);
+  ctx.lineTo(-1.4, 6.2);
+  ctx.moveTo(-2.6, 8.2);
+  ctx.lineTo(-1.4, 8.2);
   ctx.stroke();
 
-  // Suspenders
-  ctx.strokeStyle = '#854D0E';
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.moveTo(-5, 4); ctx.lineTo(-4, -4);
-  ctx.moveTo(5, 4); ctx.lineTo(4, -4);
-  ctx.stroke();
-
-  // 4. White Peasant Shirt Torso
-  ctx.fillStyle = '#FAF7EE';
+  // 4. White Linen Peasant Shirt Torso (Košulka s kšandami a mosaznými knoflíky)
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#FAF7EE';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.ellipse(0, 0, 8, 6.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -0.2, 8.6, 6.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Red neck scarf
-  ctx.fillStyle = '#DC2626';
+  // Shirt shadow fold
+  ctx.fillStyle = '#E5DEC9';
   ctx.beginPath();
-  ctx.ellipse(0, -3.5, 6, 2.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(-2.5, 1.2, 4.5, 3.5, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Leather suspenders & brass buttons
+  ctx.strokeStyle = '#854D0E';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(-5.2, 4.0);
+  ctx.lineTo(-4.2, -4.5);
+  ctx.moveTo(5.2, 4.0);
+  ctx.lineTo(4.2, -4.5);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FBBF24';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(-5.1, 3.6, 1.3, 0, Math.PI * 2);
+  ctx.arc(5.1, 3.6, 1.3, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 5. Expressive Round Face
+  // Red neckerchief with white dots
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.ellipse(0, -3.8, 6.6, 2.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(-3, -3.8, 0.7, 0, Math.PI * 2);
+  ctx.arc(0, -3.6, 0.7, 0, Math.PI * 2);
+  ctx.arc(3, -3.8, 0.7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 5. Left 2-Jointed Articulated Arm (Volná ruka pro rovnováhu)
+  const armWave = s.isMoving ? s.stride * 3.5 : Math.sin(time * 2.5) * 0.8;
+  const lShoulderX = -7.2;
+  const lShoulderY = -2.2;
+  const lElbowX = -11.5;
+  const lElbowY = 0.5 + armWave * 0.5;
+  const lWristX = -14.2;
+  const lWristY = -1.5 + armWave;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    4.6,
+    3.8,
+    '#FAF7EE',
+    '#E5DEC9',
+    '#FFFFFF',
+    '#DC2626'
+  );
+  drawGrippingHand2D(ctx, lWristX, lWristY, -0.5, '#F6CBB2', '#D9A07A', 2.5);
+
+  // 6. Expressive Round Face (Okulární mimika s pihami a červenými tvářemi)
   ctx.fillStyle = '#F6CBB2';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.arc(0, -9, 8.5, 0, Math.PI * 2);
+  ctx.arc(0, -9.2, 8.6, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // Rosy cheeks with white highlights
   ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
   ctx.beginPath();
-  ctx.arc(-5, -7.5, 2.5, 0, Math.PI * 2);
-  ctx.arc(5, -7.5, 2.5, 0, Math.PI * 2);
+  ctx.arc(-5.2, -7.6, 2.5, 0, Math.PI * 2);
+  ctx.arc(5.2, -7.6, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(-4.5, -8.5, 0.9, 0, Math.PI * 2);
-  ctx.arc(5.5, -8.5, 0.9, 0, Math.PI * 2);
+  ctx.arc(-4.7, -8.5, 0.85, 0, Math.PI * 2);
+  ctx.arc(5.7, -8.5, 0.85, 0, Math.PI * 2);
   ctx.fill();
 
-  // Bulbous button nose with freckles
+  // Multi-layered Lada expressive eyes
+  const pupilShiftX = s.isStrike ? 0.9 : s.isWindup ? -0.4 : 0.45;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.18 : 0;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.4 : -0.6;
+
+  drawLadaExpressiveEye2D(
+    ctx,
+    -3.5,
+    -11.0,
+    2.5,
+    2.7,
+    '#FFFFFF',
+    s.isEnraged ? '#EA580C' : '#2563EB',
+    pupilShiftX,
+    0,
+    eyeSquint,
+    '#78350F',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    3.5,
+    -11.0,
+    2.5,
+    2.7,
+    '#FFFFFF',
+    s.isEnraged ? '#EA580C' : '#2563EB',
+    pupilShiftX,
+    0,
+    eyeSquint,
+    '#78350F',
+    -browTilt,
+    0
+  );
+
+  // Bulbous button nose & freckles
   ctx.fillStyle = '#EB9A7E';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(0, -8.5, 2.2, 0, Math.PI * 2);
+  ctx.arc(0, -8.6, 2.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Freckles
   ctx.fillStyle = '#854D0E';
-  ctx.fillRect(-3, -6.5, 0.8, 0.8);
-  ctx.fillRect(-2, -5.8, 0.8, 0.8);
-  ctx.fillRect(2, -6.5, 0.8, 0.8);
-  ctx.fillRect(3, -5.8, 0.8, 0.8);
-
-  // Mischievous eyes with whites, blue irises and catchlights
-  for (const side of [-1, 1]) {
-    const eyeX = side * 3.5;
-    const eyeY = -11;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.3;
-    ctx.beginPath();
-    ctx.ellipse(eyeX, eyeY, 2.6, 2.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Iris
-    ctx.fillStyle = '#2563EB';
-    ctx.beginPath();
-    ctx.arc(eyeX + (s.isAttacking ? side * 0.8 : 0.4), eyeY, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Pupil
-    ctx.fillStyle = '#0F172A';
-    ctx.beginPath();
-    ctx.arc(eyeX + (s.isAttacking ? side * 0.8 : 0.4), eyeY, 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Catchlight
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(eyeX + 0.8, eyeY - 0.9, 0.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Playful bushy eyebrow
-    ctx.strokeStyle = '#78350F';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    const browTilt = s.isAttacking ? side * 1.5 : -side * 0.8;
-    ctx.moveTo(eyeX - 2.5, eyeY - 3.8 + browTilt);
-    ctx.quadraticCurveTo(eyeX, eyeY - 5.0, eyeX + 2.5, eyeY - 3.8 - browTilt);
-    ctx.stroke();
-  }
+  ctx.fillRect(-3.2, -6.6, 0.8, 0.8);
+  ctx.fillRect(-2.1, -5.9, 0.8, 0.8);
+  ctx.fillRect(2.1, -6.6, 0.8, 0.8);
+  ctx.fillRect(3.2, -5.9, 0.8, 0.8);
 
   // Broad smiling mouth with tongue
   ctx.fillStyle = '#881337';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  if (s.isAttacking) {
-    // Open joyful yell
-    ctx.ellipse(0, -4.5, 3.5, 3.0, 0, 0, Math.PI);
+  if (s.isAttacking || s.isEnraged) {
+    ctx.ellipse(0, -4.6, 3.6, 2.8, 0, 0, Math.PI);
   } else {
-    // Wide cheeky smile
-    ctx.arc(0, -5.5, 4.0, 0.2, Math.PI - 0.2);
+    ctx.arc(0, -5.6, 4.0, 0.18, Math.PI - 0.18);
   }
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Pink tongue
   ctx.fillStyle = '#F472B6';
   ctx.beginPath();
-  ctx.arc(0, -4.2, 1.8, 0, Math.PI);
+  ctx.arc(0, -4.3, 1.8, 0, Math.PI);
   ctx.fill();
 
-  // 6. Giant Yellow Marsh Marigold (Blatouch) Flower Hat
-  // Green stem sticking out
+  // 7. Giant Yellow Marsh Marigold (Blatouch) Flower Hat
   ctx.fillStyle = '#15803D';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.6;
+  ctx.lineWidth = 1.7;
   ctx.beginPath();
   ctx.moveTo(-1, -21);
-  ctx.quadraticCurveTo(2, -26, 4, -28);
-  ctx.lineTo(2.5, -28.5);
+  ctx.quadraticCurveTo(2, -26, 4.2, -28.2);
+  ctx.lineTo(2.5, -28.8);
   ctx.quadraticCurveTo(0.5, -26, -2.2, -21);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Dew drop on stem
-  ctx.fillStyle = 'rgba(186, 230, 253, 0.8)';
-  ctx.beginPath();
-  ctx.arc(3.5, -27, 1.2, 0, Math.PI * 2);
-  ctx.fill();
+  drawWaterDroplet2D(ctx, 4.2, -26.5, 1.6, 0.9);
 
-  // Large five-lobed bright gouache marigold blossom
   const petalColors = ['#FBBF24', '#F59E0B', '#FCD34D', '#F59E0B', '#FBBF24'];
   for (let i = 0; i < 5; i++) {
     const angle = -Math.PI / 2 + (i - 2) * 0.55;
     const px = Math.cos(angle) * 11;
-    const py = -16 + Math.sin(angle) * 6;
+    const py = -16.2 + Math.sin(angle) * 6;
     ctx.fillStyle = petalColors[i];
     ctx.strokeStyle = HOSPODA_INK;
     ctx.lineWidth = 1.8;
@@ -277,54 +331,78 @@ export function drawHospodaBlatouch(
     ctx.stroke();
   }
 
-  // Golden stamen center
   ctx.fillStyle = '#D97706';
   ctx.beginPath();
-  ctx.arc(0, -16.5, 4.2, 0, Math.PI * 2);
+  ctx.arc(0, -16.6, 4.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 7. Arms and Botanical Prop (Marsh Willow Reed)
-  const armSwing = Math.sin(time * 8) * 4;
-  // Left arm holding blossom reed
-  ctx.fillStyle = '#E8BE9B';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.0;
-
-  ctx.beginPath();
-  ctx.moveTo(-7, -2);
-  ctx.lineTo(-12, 1 + armSwing);
-  ctx.lineTo(-14, -1 + armSwing);
-  ctx.lineTo(-7, -4);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // The reed with golden bud
-  ctx.strokeStyle = '#15803D';
-  ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  ctx.moveTo(-13, 0 + armSwing);
-  ctx.lineTo(-19, -14 + armSwing + (s.isStrike ? -4 : 0));
-  ctx.stroke();
-
-  drawFolkFlower2D(ctx, -19, -15 + armSwing + (s.isStrike ? -4 : 0), 4.5, '#F59E0B', '#FEF08A');
-
-  // Droplets splashing from the reed
-  if (s.isAttacking) {
-    drawWaterDroplet2D(ctx, -23, -16, 2.5, 1.0);
-    drawWaterDroplet2D(ctx, -20, -22, 2.0, 1.0);
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 0, -24, time, 1.0);
   }
 
-  // Right arm swinging cheerfully
+  // 8. Right 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Marsh Marigold Reed Staff
+  const rShoulderX = 7.2;
+  const rShoulderY = -2.0;
+  const rElbowX = s.isWindup ? 9.5 - s.windupProgress * 2.5 : s.isStrike ? 11.8 + s.strikeProgress * 2.5 : 10.5;
+  const rElbowY = s.isWindup ? 1.5 - s.windupProgress * 3.0 : s.isStrike ? -0.5 + s.strikeProgress * 1.5 : 1.5 - armWave * 0.4;
+  const rWristX = s.isWindup ? 11.0 - s.windupProgress * 3.0 : s.isStrike ? 15.8 + s.strikeProgress * 4.5 : 13.5;
+  const rWristY = s.isWindup ? -4.0 - s.windupProgress * 4.5 : s.isStrike ? -2.0 + s.strikeProgress * 3.0 : -1.0 - armWave * 0.8;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    4.6,
+    3.8,
+    '#FAF7EE',
+    '#E5DEC9',
+    '#FFFFFF',
+    '#DC2626'
+  );
+
+  // Botanical Marsh Marigold Reed Staff (Blatouchový stvol s květem pevně sevřený v dlani)
+  const staffAngle = s.isWindup
+    ? -0.45 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.35 + s.strikeProgress * 0.55
+    : -0.2 + Math.sin(time * 3) * 0.06;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(staffAngle);
+
+  // Reed shaft passing directly through palm (y = 0)
+  ctx.fillStyle = '#15803D';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.moveTo(7, -2);
-  ctx.lineTo(13, 2 - armSwing);
-  ctx.lineTo(14, 0 - armSwing);
-  ctx.lineTo(7, -4);
-  ctx.closePath();
+  ctx.rect(-1.2, -17, 2.4, 24);
   ctx.fill();
   ctx.stroke();
+
+  // Side leaf on reed
+  ctx.fillStyle = '#22C55E';
+  ctx.beginPath();
+  ctx.ellipse(3.2, -7.5, 3.5, 1.6, -0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden Marsh Marigold flower at tip
+  drawFolkFlower2D(ctx, 0, -18, 5.2, '#F59E0B', '#FEF08A');
+
+  if (s.isAttacking || s.isEnraged) {
+    drawWaterDroplet2D(ctx, 5.5, -20, 2.4, 1.0);
+    drawWaterDroplet2D(ctx, -4.5, -22, 2.0, 0.95);
+  }
+  ctx.restore();
+
+  // 4-fingered hand closed over the reed shaft
+  drawGrippingHand2D(ctx, rWristX, rWristY, staffAngle, '#F6CBB2', '#D9A07A', 2.6);
 
   ctx.restore();
 }
@@ -352,219 +430,267 @@ export function drawHospodaVodnicek(
 
   if (s.isPanicked) {
     ctx.rotate(-0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.12 * s.strikeProgress);
   }
 
   // 1. Muddy Pond Shadow with Ripple Rings
   ctx.save();
-  ctx.fillStyle = 'rgba(21, 52, 38, 0.35)';
+  ctx.fillStyle = 'rgba(21, 52, 38, 0.36)';
   ctx.beginPath();
   ctx.ellipse(0, 20, 20, 6, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-  ctx.lineWidth = 1.2;
-  const ripple = (time * 2) % 1;
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+  ctx.lineWidth = 1.3;
+  const ripple = (time * 1.8) % 1;
   ctx.beginPath();
-  ctx.ellipse(0, 20, 16 + ripple * 8, 4.5 + ripple * 2.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 20, 15 + ripple * 8, 4.2 + ripple * 2.4, 0, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 
-  // 2. Webbed Green Feet with 4 Toes
-  ctx.fillStyle = '#22C55E';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.0;
-
-  const legShift = Math.sin(time * 9) * 4.5;
+  // 2. Webbed Green Feet with 4 Toes (respektující klidový postoj vx === 0 vs. chůzi vx !== 0)
+  const legShift = s.stride * 4.8;
   for (const side of [-1, 1]) {
-    const lx = side * 6 + (side === -1 ? legShift : -legShift);
+    const lx = side * 5.8 + (side === -1 ? legShift : -legShift);
+    ctx.fillStyle = '#22C55E';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.moveTo(lx - 2, 8);
-    ctx.lineTo(lx - 4, 19);
-    ctx.lineTo(lx + 6, 19);
-    ctx.lineTo(lx + 2, 8);
+    ctx.moveTo(lx - 2.2, 8);
+    ctx.lineTo(lx - 4.2, 19);
+    ctx.lineTo(lx + 5.8, 19);
+    ctx.lineTo(lx + 2.2, 8);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
+    // Leg shadow
+    ctx.fillStyle = '#15803D';
+    ctx.fillRect(lx - 2.0, 9.5, 1.8, 8.0);
+
     // 4 webbed frog toes
+    ctx.fillStyle = '#4ADE80';
     for (let t = 0; t < 4; t++) {
       ctx.beginPath();
-      ctx.arc(lx - 3 + t * 2.8, 19, 1.5, 0, Math.PI * 2);
+      ctx.arc(lx - 3.2 + t * 2.7, 19.2, 1.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
   }
 
-  // 3. Green Frock Coat with Red Trimming & Coattails Dripping Water
-  ctx.fillStyle = '#15803D';
+  // 3. Characteristic Ladovské Coattails (Kapající šosy zeleného fráčku)
+  const flap = (s.isMoving ? s.stride * 2.5 : 0) + Math.sin(time * 4.5) * 1.4;
+  ctx.fillStyle = '#14532D';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.2;
-
-  // Torso coat
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-10, -4);
-  ctx.lineTo(10, -4);
-  ctx.lineTo(12, 10);
-  ctx.lineTo(-12, 10);
+  ctx.moveTo(-8.5, 8.5);
+  ctx.quadraticCurveTo(-14.5, 14.5 + flap, -16.5, 20.5 + flap);
+  ctx.lineTo(-10.5, 21.5 + flap);
+  ctx.lineTo(-5.5, 9.5);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Red piping on collar & hems
+  // Red piping on coattail tip
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-13.5, 20.8 + flap, 2.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Realistic dripping water cycle from the coattails to pond ground (groundY = 23)
+  drawRealisticDripCycle2D(ctx, -13.5, 21.0 + flap, 23.0, time, 1.3, 0.15, 2.0);
+  drawRealisticDripCycle2D(ctx, -10.5, 20.0 + flap, 23.0, time, 1.3, 0.65, 1.7);
+
+  // 4. 3-Tier Gouache Green Frock Coat with Red Trimming & Brass Buttons
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#15803D';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-9.8, -4.2);
+  ctx.lineTo(9.8, -4.2);
+  ctx.lineTo(11.8, 10.2);
+  ctx.lineTo(-11.8, 10.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Coat shadow & highlight
+  ctx.fillStyle = '#14532D';
+  ctx.fillRect(-10.2, 6.2, 20.4, 3.2);
+  ctx.fillStyle = '#22C55E';
+  ctx.fillRect(-7.5, -2.8, 4.2, 7.5);
+
+  // Red piping on collar & bottom hem
   ctx.strokeStyle = '#DC2626';
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-12, 10); ctx.lineTo(12, 10);
-  ctx.moveTo(-7, -4); ctx.lineTo(0, 4); ctx.lineTo(7, -4);
+  ctx.moveTo(-11.5, 10.0);
+  ctx.lineTo(11.5, 10.0);
+  ctx.moveTo(-7.2, -4.0);
+  ctx.lineTo(0, 4.2);
+  ctx.lineTo(7.2, -4.0);
   ctx.stroke();
 
-  // Characteristic Ladovské Coattails (šosy) flapping behind
-  ctx.fillStyle = '#166534';
+  // Brass buttons down front
+  ctx.fillStyle = '#FBBF24';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.0;
-  const flap = Math.sin(time * 12) * 3;
-  ctx.beginPath();
-  ctx.moveTo(-9, 10);
-  ctx.quadraticCurveTo(-14, 16 + flap, -16, 22 + flap);
-  ctx.lineTo(-11, 23 + flap);
-  ctx.lineTo(-7, 10);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  ctx.lineWidth = 1.2;
+  for (const by of [2.5, 5.5, 8.2]) {
+    ctx.beginPath();
+    ctx.arc(0, by, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
 
-  // Red lining on the coattail tip
-  ctx.fillStyle = '#DC2626';
-  ctx.beginPath();
-  ctx.arc(-13.5, 22.5 + flap, 2.0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Water actively dripping from the coattail!
-  drawRealisticDripCycle2D(ctx, -14, 24 + flap, time, 1.2);
-  drawRealisticDripCycle2D(ctx, 10, 12, time + 0.6, 1.0);
-
-  // Red Polka-dot Scarf
+  // Red Polka-dot Neckerchief
   ctx.fillStyle = '#EF4444';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.ellipse(0, -4.5, 8.5, 3.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -4.5, 8.5, 3.4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // White polka dots
   ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(-4, -4.5, 1.1, 0, Math.PI * 2);
-  ctx.arc(0, -4.5, 1.1, 0, Math.PI * 2);
-  ctx.arc(4, -4.5, 1.1, 0, Math.PI * 2);
-  ctx.fill();
+  for (const dx of [-4.2, 0, 4.2]) {
+    ctx.beginPath();
+    ctx.arc(dx, -4.5, 1.05, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  // 4. Green Bog Frog-Face with Big Cheeks
+  // 5. Left 2-Jointed Articulated Arm & 4-Fingered Webbed Green Hand
+  const armSwing = s.isMoving ? s.stride * 3.2 : Math.sin(time * 2.4) * 0.7;
+  const lShoulderX = -8.8;
+  const lShoulderY = -2.2;
+  const lElbowX = -13.2;
+  const lElbowY = 1.5 + armSwing * 0.5;
+  const lWristX = -15.5;
+  const lWristY = 4.2 + armSwing;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    5.0,
+    4.2,
+    '#15803D',
+    '#14532D',
+    '#22C55E',
+    '#DC2626'
+  );
+  drawGrippingHand2D(ctx, lWristX, lWristY, 0.4, '#4ADE80', '#16A34A', 2.7);
+
+  // 6. Green Bog Frog-Face with Big Cheeks & Expressive Ocular Mimicry
   ctx.fillStyle = '#4ADE80';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.arc(0, -12, 10.0, 0, Math.PI * 2);
+  ctx.arc(0, -12.0, 9.8, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Bog warts on cheek
+  // Bog warts on cheeks
   ctx.fillStyle = '#16A34A';
   ctx.beginPath();
-  ctx.arc(-6, -9, 1.4, 0, Math.PI * 2);
-  ctx.arc(-7.5, -11, 1.0, 0, Math.PI * 2);
-  ctx.arc(7, -9, 1.3, 0, Math.PI * 2);
+  ctx.arc(-6.2, -9.2, 1.35, 0, Math.PI * 2);
+  ctx.arc(-7.6, -11.2, 0.95, 0, Math.PI * 2);
+  ctx.arc(6.8, -9.2, 1.25, 0, Math.PI * 2);
   ctx.fill();
+
+  // Multi-layered Lada expressive frog eyes
+  const pupilX = s.isStrike ? 1.0 : s.isWindup ? -0.5 : 0.5;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.24 : 0.08;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.6 : 0.7;
+
+  drawLadaExpressiveEye2D(
+    ctx,
+    -4.2,
+    -14.5,
+    3.0,
+    2.9,
+    '#FEF08A',
+    s.isEnraged ? '#DC2626' : '#065F46',
+    pupilX,
+    0,
+    eyeSquint,
+    '#064E3B',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    4.2,
+    -14.5,
+    3.0,
+    2.9,
+    '#FEF08A',
+    s.isEnraged ? '#DC2626' : '#065F46',
+    pupilX,
+    0,
+    eyeSquint,
+    '#064E3B',
+    -browTilt,
+    0
+  );
 
   // Hooked Ladovský frog-nose
   ctx.fillStyle = '#22C55E';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(0, -11, 2.5, 0, Math.PI * 2);
+  ctx.arc(0, -11.0, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Sly squinting eyes with golden-green irises
-  for (const side of [-1, 1]) {
-    const ex = side * 4.2;
-    const ey = -14.5;
-    ctx.fillStyle = '#FEF08A';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 3.2, 3.0, side * 0.15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Iris & slitted frog pupil
-    ctx.fillStyle = '#065F46';
-    ctx.beginPath();
-    ctx.ellipse(ex + side * 0.5, ey, 1.6, 2.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#022C22';
-    ctx.beginPath();
-    ctx.rect(ex + side * 0.5 - 0.5, ey - 1.8, 1.0, 3.6);
-    ctx.fill();
-
-    // Specular glint
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(ex + 1.0, ey - 1.0, 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Shrewd arched eyebrow
-    ctx.strokeStyle = '#064E3B';
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.moveTo(ex - 2.8, ey - 4.2);
-    ctx.quadraticCurveTo(ex, ey - 5.5, ex + 2.8, ey - 3.8);
-    ctx.stroke();
-  }
-
-  // Crooked sly grin showing single yellow tooth
+  // Crooked sly grin showing single yellow snaggle-tooth & pink tongue
   ctx.fillStyle = '#7F1D1D';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(0, -7.5, 5.0, 0.1, Math.PI * 0.95);
+  ctx.arc(0, -7.6, 5.0, 0.08, Math.PI * 0.95);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Yellow snaggle-tooth
   ctx.fillStyle = '#FEF08A';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.0;
+  ctx.lineWidth = 1.1;
   ctx.beginPath();
-  ctx.rect(1.0, -8.0, 2.0, 2.8);
+  ctx.rect(1.0, -8.0, 2.0, 2.7);
   ctx.fill();
   ctx.stroke();
 
-  // Pink frog tongue sticking out playfully
   ctx.fillStyle = '#F43F5E';
   ctx.beginPath();
   ctx.arc(-1.5, -5.8, 2.0, 0, Math.PI);
   ctx.fill();
 
-  // 5. Tall Waterlily Top Hat with Fishing Hook & Red Feather
+  // 7. Tall Waterlily Top Hat with Blooming Water-Lily & Red Pheasant Feather
   ctx.fillStyle = '#14532D';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
 
   // Brim
   ctx.beginPath();
-  ctx.ellipse(0, -19, 13, 3.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -19.2, 13.2, 3.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // Crown
   ctx.beginPath();
-  ctx.moveTo(-7, -19);
-  ctx.lineTo(-5.5, -28);
-  ctx.lineTo(5.5, -28);
-  ctx.lineTo(7, -19);
+  ctx.moveTo(-7.2, -19.2);
+  ctx.lineTo(-5.6, -28.5);
+  ctx.lineTo(5.6, -28.5);
+  ctx.lineTo(7.2, -19.2);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -572,49 +698,100 @@ export function drawHospodaVodnicek(
   // Red hatband
   ctx.fillStyle = '#DC2626';
   ctx.beginPath();
-  ctx.rect(-6.8, -21.5, 13.6, 2.5);
+  ctx.rect(-6.9, -21.8, 13.8, 2.6);
   ctx.fill();
   ctx.stroke();
 
-  // Water lily blossom tucked in hatband
-  drawWaterLilyBlossom2D(ctx, -6, -23, 0.7);
+  // Blooming water-lily blossom tucked in hatband (proper radius 3.8px)
+  drawWaterLilyBlossom2D(ctx, -5.8, -22.5, 3.8, -0.2);
 
   // Red pheasant feather
   ctx.strokeStyle = '#DC2626';
-  ctx.lineWidth = 2.0;
+  ctx.lineWidth = 2.1;
   ctx.beginPath();
-  ctx.moveTo(4, -22);
-  ctx.quadraticCurveTo(11, -28, 14, -34);
+  ctx.moveTo(4.2, -22.0);
+  ctx.quadraticCurveTo(11.0, -28.0, 14.2, -34.0);
   ctx.stroke();
 
-  // 6. Willow Wand with Ribbon Streamers in Hand
-  const wandBob = Math.sin(time * 7) * 3;
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 0, -30, time, 1.0);
+  }
+
+  // 8. Right 2-Jointed Articulated Arm & 4-Fingered Webbed Hand Gripping Willow Wand
+  const rShoulderX = 8.6;
+  const rShoulderY = -2.0;
+  const rElbowX = s.isWindup ? 10.5 - s.windupProgress * 2.5 : s.isStrike ? 13.5 + s.strikeProgress * 3.0 : 12.2;
+  const rElbowY = s.isWindup ? 1.0 - s.windupProgress * 3.0 : s.isStrike ? -0.5 + s.strikeProgress * 1.5 : 1.8 - armSwing * 0.4;
+  const rWristX = s.isWindup ? 12.2 - s.windupProgress * 3.5 : s.isStrike ? 18.0 + s.strikeProgress * 5.0 : 15.5;
+  const rWristY = s.isWindup ? -4.5 - s.windupProgress * 5.0 : s.isStrike ? -1.5 + s.strikeProgress * 3.5 : 0.2 - armSwing * 0.7;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    5.0,
+    4.2,
+    '#15803D',
+    '#14532D',
+    '#22C55E',
+    '#DC2626'
+  );
+
+  // Willow Wand with Ribbon Streamers (Vrbový proutek s pentlemi pevně sevřený v dlani)
+  const wandAngle = s.isWindup
+    ? -0.55 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.45 + s.strikeProgress * 0.65
+    : -0.15 + Math.sin(time * 3.5) * 0.08;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(wandAngle);
+
+  // Flexible willow shaft passing through hand origin (0, 0)
   ctx.strokeStyle = '#854D0E';
-  ctx.lineWidth = 2.0;
+  ctx.lineWidth = 2.3;
   ctx.beginPath();
-  ctx.moveTo(11, 4);
-  ctx.quadraticCurveTo(18, -4 + wandBob, 22, -18 + wandBob + (s.isStrike ? 8 : 0));
+  ctx.moveTo(-1.0, 5.5);
+  ctx.quadraticCurveTo(2.5, -8.0, 6.5, -21.0);
   ctx.stroke();
 
-  // Floating ribbons (pentle)
+  // Floating ribbons (3 barevné pentle na špičce proutku)
   const ribColors = ['#EF4444', '#3B82F6', '#EAB308'];
   for (let r = 0; r < 3; r++) {
     ctx.strokeStyle = ribColors[r];
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.7;
+    const rx = 6.2 - r * 0.5;
+    const ry = -20.5 + r * 2.6;
     ctx.beginPath();
-    const rx = 22;
-    const ry = -18 + wandBob + r * 2.5;
     ctx.moveTo(rx, ry);
-    ctx.quadraticCurveTo(rx + 6, ry + Math.sin(time * 10 + r) * 4, rx + 12, ry + 2);
+    ctx.quadraticCurveTo(
+      rx + 5.5,
+      ry + Math.sin(time * 9 + r * 1.3) * 3.8,
+      rx + 11.5,
+      ry + 1.8 + Math.cos(time * 8 + r) * 2.2
+    );
     ctx.stroke();
   }
+
+  if (s.isAttacking) {
+    drawWaterDroplet2D(ctx, 9.5, -22.0, 2.2, 0.95);
+  }
+  ctx.restore();
+
+  // 4-fingered webbed green hand closed over the willow wand
+  drawGrippingHand2D(ctx, rWristX, rWristY, wandAngle, '#4ADE80', '#16A34A', 2.8);
 
   ctx.restore();
 }
 
 // ---------------------------------------------------------------------------
 // 3. MRAZIVÁ VRÁNA (Stage Crow, L0 Vele-boss)
-// Archetyp: Komicky vzteklá a furiantská vrána v pletené šále a teplých škorních
+// Archetyp: Komicky vzteklá a furiantská vrána v pletené šále, záplatované vestě a dřevácích
 // ---------------------------------------------------------------------------
 export function drawHospodaStageCrow(
   ctx: CanvasRenderingContext2D,
@@ -635,217 +812,349 @@ export function drawHospodaStageCrow(
 
   if (s.isPanicked) {
     ctx.rotate(0.12);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.09 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.14 * s.strikeProgress);
   }
 
-  // 1. Shadow Below
+  // 1. Frosty Ground Shadow
   ctx.save();
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.30)';
   ctx.beginPath();
-  ctx.ellipse(0, 22, 22, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 22.5, 22, 6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // 2. Powerful Clawed Crow Legs in Woolen Socks & Wooden Clogs
-  ctx.fillStyle = '#94A3B8';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.0;
-
-  const legWobble = Math.sin(time * 8) * 3;
+  // 2. Clawed Crow Legs in Striped Woolen Socks & Wooden Clogs (respektující vx === 0 vs. vx !== 0)
+  const legStep = s.stride * 4.5;
   for (const side of [-1, 1]) {
-    const lx = side * 7;
-    // Striped warm sock
+    const shift = side === -1 ? legStep : -legStep;
+    const lx = side * 6.8 + shift;
+
+    // Striped warm woolen sock
+    ctx.fillStyle = '#E2E8F0';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.rect(lx - 2.5, 10, 5, 8);
+    ctx.rect(lx - 2.6, 9.5, 5.2, 8.8);
     ctx.fill();
     ctx.stroke();
 
-    // Stripes on socks
+    // Red folk stripes on socks
     ctx.strokeStyle = '#DC2626';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(lx - 2.5, 12.5); ctx.lineTo(lx + 2.5, 12.5);
-    ctx.moveTo(lx - 2.5, 15.5); ctx.lineTo(lx + 2.5, 15.5);
+    ctx.moveTo(lx - 2.5, 12.2);
+    ctx.lineTo(lx + 2.5, 12.2);
+    ctx.moveTo(lx - 2.5, 15.2);
+    ctx.lineTo(lx + 2.5, 15.2);
     ctx.stroke();
 
-    // Wooden peasant clog (dřevák)
+    // Wooden peasant clog (okovaný dřevák)
     ctx.fillStyle = '#78350F';
     ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.9;
     ctx.beginPath();
-    ctx.moveTo(lx - 4, 18);
-    ctx.lineTo(lx + 7, 18);
-    ctx.lineTo(lx + 6, 22);
-    ctx.lineTo(lx - 5, 22);
+    ctx.moveTo(lx - 4.2, 18.0);
+    ctx.lineTo(lx + 7.2, 18.0);
+    ctx.lineTo(lx + 6.2, 22.2);
+    ctx.lineTo(lx - 5.2, 22.2);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Clog highlight & brass stud
+    ctx.fillStyle = '#B45309';
+    ctx.fillRect(lx - 2.5, 18.6, 6.5, 1.5);
+    ctx.fillStyle = '#FBBF24';
+    ctx.beginPath();
+    ctx.arc(lx + 3.5, 20.0, 0.9, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // 3. Shaggy Black & Blue-Grey Crow Plumage Torso
-  ctx.fillStyle = '#1E293B';
+  // 3. Back Articulated Feathered Wing-Arm (Levé křídlo)
+  const wingBeat = s.isAttacking
+    ? Math.sin(time * 16) * 8
+    : s.isMoving
+    ? s.stride * 5.5
+    : Math.sin(time * 2.6) * 1.1;
+
+  drawArticulatedArm2D(
+    ctx,
+    -8.5,
+    -2.5,
+    -15.5,
+    -5.0 + wingBeat * 0.5,
+    -21.5,
+    0.5 + wingBeat,
+    5.6,
+    4.6,
+    '#0F172A',
+    '#020617',
+    '#334155',
+    '#475569'
+  );
+  drawGrippingHand2D(ctx, -21.5, 0.5 + wingBeat, 2.5, '#1E293B', '#0F172A', 3.0, '#FBBF24');
+
+  // 4. 3-Tier Gouache Shaggy Crow Plumage Torso & Patched Folk Vest
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#1E293B';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.ellipse(0, 2, 14, 16, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 2.0, 14.2, 15.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Layered feather highlights (Ladovský kvašový rastr)
-  const feathers = [
-    [-6, -4, '#334155'], [0, -3, '#475569'], [6, -4, '#334155'],
-    [-5, 4, '#334155'], [0, 5, '#475569'], [5, 4, '#334155']
+  // Plumage shadow & highlight
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.ellipse(-4.5, 5.5, 8.5, 9.5, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.ellipse(4.0, -1.5, 6.5, 8.0, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Layered breast feather scales (Ladovský kvašový rastr)
+  const feathers: Array<[number, number, string]> = [
+    [-5.5, -3.5, '#334155'],
+    [0.5, -2.5, '#475569'],
+    [6.0, -3.5, '#334155'],
+    [-4.5, 4.0, '#334155'],
+    [1.0, 5.0, '#475569'],
+    [5.5, 4.0, '#334155'],
   ];
   for (const [fx, fy, col] of feathers) {
-    ctx.fillStyle = col as string;
+    ctx.fillStyle = col;
     ctx.strokeStyle = HOSPODA_INK;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(fx as number, fy as number, 4, 3, 0.2, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, 4.0, 2.9, 0.15, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
 
-  // Flapping Wings
-  const wingFlap = Math.sin(time * 12) * (s.isAttacking ? 18 : 10);
-  // Back wing
-  ctx.fillStyle = '#0F172A';
+  // Cross-stitched ochre cloth patch on belly
+  ctx.fillStyle = '#D97706';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(-8, -2);
-  ctx.quadraticCurveTo(-22, -10 + wingFlap, -30, 2 + wingFlap);
-  ctx.lineTo(-24, 8 + wingFlap);
-  ctx.lineTo(-10, 8);
-  ctx.closePath();
+  ctx.rect(-6.8, 7.2, 5.2, 4.2);
   ctx.fill();
   ctx.stroke();
-
-  // Front wing
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 1.0;
   ctx.beginPath();
-  ctx.moveTo(8, -2);
-  ctx.quadraticCurveTo(22, -10 - wingFlap, 30, 2 - wingFlap);
-  ctx.lineTo(24, 8 - wingFlap);
-  ctx.lineTo(10, 8);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(-7.2, 8.0);
+  ctx.lineTo(-6.0, 8.0);
+  ctx.moveTo(-7.2, 10.4);
+  ctx.lineTo(-6.0, 10.4);
+  ctx.moveTo(-2.2, 8.0);
+  ctx.lineTo(-1.0, 8.0);
   ctx.stroke();
 
-  // 4. Red Woolen Knit Scarf with Tassels
+  // 5. Red Woolen Knit Scarf with Yellow Tassels
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.ellipse(0, -6, 12, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -6.2, 12.2, 4.4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Dangling scarf tail flapping in frost wind
-  const scarfWave = Math.sin(time * 9) * 4;
+  // White knitted stitch pattern on scarf
+  ctx.strokeStyle = '#FEE2E2';
+  ctx.lineWidth = 1.3;
   ctx.beginPath();
-  ctx.moveTo(-4, -3);
-  ctx.quadraticCurveTo(-12, 4 + scarfWave, -16, 14 + scarfWave);
-  ctx.lineTo(-11, 15 + scarfWave);
-  ctx.lineTo(-2, -3);
+  ctx.moveTo(-8, -6.2);
+  ctx.lineTo(8, -6.2);
+  ctx.stroke();
+
+  const scarfWave = (s.isMoving ? s.stride * 3.0 : 0) + Math.sin(time * 5.5) * 1.8;
+  ctx.fillStyle = '#B91C1C';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.9;
+  ctx.beginPath();
+  ctx.moveTo(-4.5, -3.2);
+  ctx.quadraticCurveTo(-12.5, 4.0 + scarfWave, -16.5, 13.8 + scarfWave);
+  ctx.lineTo(-11.2, 14.8 + scarfWave);
+  ctx.lineTo(-2.0, -3.2);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Scarf fringe/tassels
   ctx.strokeStyle = '#FEF08A';
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 1.7;
   for (let i = 0; i < 4; i++) {
     ctx.beginPath();
-    ctx.moveTo(-16 + i * 1.5, 14 + scarfWave);
-    ctx.lineTo(-17 + i * 1.5, 18 + scarfWave);
+    ctx.moveTo(-16.2 + i * 1.5, 13.8 + scarfWave);
+    ctx.lineTo(-17.2 + i * 1.5, 17.5 + scarfWave);
     ctx.stroke();
   }
 
-  // 5. Huge Crow Head with Fiery Expressive Eyes & Giant Yellow Beak
+  // 6. Huge Crow Head with Multi-Layered Expressive Eyes & Giant Yellow Beak
   ctx.fillStyle = '#0F172A';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.arc(0, -14, 11, 0, Math.PI * 2);
+  ctx.arc(0, -14.2, 11.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Angry bushy Ladovské V-eyebrows
-  ctx.strokeStyle = '#FEF08A';
-  ctx.lineWidth = 2.4;
+  // Patched winter ear-flap cap on top of head
+  ctx.fillStyle = '#78350F';
   ctx.beginPath();
-  ctx.moveTo(-7, -21 + (s.isAttacking ? 2 : 0));
-  ctx.lineTo(-1, -18);
-  ctx.lineTo(5, -21 + (s.isAttacking ? 2 : 0));
+  ctx.arc(-1.0, -19.5, 8.2, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
   ctx.stroke();
-
-  // Large bulging eye with white sclera and red-amber iris
-  ctx.fillStyle = '#FFFFFF';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
+  ctx.fillStyle = '#E2E8F0';
   ctx.beginPath();
-  ctx.ellipse(3, -16, 4.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(-1.0, -19.5, 8.6, 2.4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Fiery iris
-  ctx.fillStyle = s.isEnraged ? '#EF4444' : '#F59E0B';
-  ctx.beginPath();
-  ctx.arc(3.5, -16, 2.5, 0, Math.PI * 2);
-  ctx.fill();
+  // Multi-layered Lada expressive eyes (left & right)
+  const pupilX = s.isStrike ? 1.1 : s.isWindup ? -0.5 : 0.6;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.25 : 0.08;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.8 : 0.9;
 
-  // Deep black pupil
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.arc(3.8, -16, 1.2, 0, Math.PI * 2);
-  ctx.fill();
+  drawLadaExpressiveEye2D(
+    ctx,
+    -2.2,
+    -15.8,
+    3.1,
+    3.2,
+    '#FFFFFF',
+    s.isEnraged ? '#EF4444' : '#F59E0B',
+    pupilX,
+    0,
+    eyeSquint,
+    '#FEF08A',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    4.2,
+    -15.8,
+    3.6,
+    3.7,
+    '#FFFFFF',
+    s.isEnraged ? '#EF4444' : '#F59E0B',
+    pupilX,
+    0,
+    eyeSquint,
+    '#FEF08A',
+    -browTilt,
+    0
+  );
 
-  // Bright specular glint
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(4.6, -17.2, 1.0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Giant sharp yellow beak
+  // Giant sharp yellow beak with nostrils
+  const beakOpen = s.isAttacking || s.isEnraged ? 4.8 : 1.0;
   ctx.fillStyle = '#FBBF24';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
-  const beakOpen = s.isAttacking ? 5 : 1;
 
   // Upper beak
   ctx.beginPath();
-  ctx.moveTo(8, -17);
-  ctx.quadraticCurveTo(18, -16, 25, -13);
-  ctx.quadraticCurveTo(18, -11, 9, -13);
+  ctx.moveTo(7.8, -17.2);
+  ctx.quadraticCurveTo(18.0, -16.2, 25.0, -13.0);
+  ctx.quadraticCurveTo(18.0, -11.2, 8.8, -13.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
   // Lower beak
+  ctx.fillStyle = '#D97706';
   ctx.beginPath();
-  ctx.moveTo(9, -13);
-  ctx.quadraticCurveTo(17, -10 + beakOpen, 23, -11 + beakOpen);
-  ctx.lineTo(8, -9 + beakOpen);
+  ctx.moveTo(8.8, -13.0);
+  ctx.quadraticCurveTo(17.0, -10.0 + beakOpen, 22.8, -11.0 + beakOpen);
+  ctx.lineTo(7.8, -9.2 + beakOpen);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Red tongue inside yelling beak
-  if (s.isAttacking) {
+  // Nostril & red tongue
+  ctx.fillStyle = HOSPODA_INK;
+  ctx.beginPath();
+  ctx.ellipse(12.5, -14.8, 1.1, 0.6, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (s.isAttacking || s.isEnraged) {
     ctx.fillStyle = '#DC2626';
     ctx.beginPath();
-    ctx.arc(13, -12 + beakOpen * 0.5, 2.2, 0, Math.PI * 2);
+    ctx.arc(13.0, -12.0 + beakOpen * 0.45, 2.1, 0, Math.PI * 2);
     ctx.fill();
   }
 
   // Steam puffs shooting from beak in winter frost
-  drawFuriantSteamPuffs(ctx, 26, -13, time, 1);
+  drawFuriantSteamPuffs(ctx, 25.5, -13.0, time, 1);
+
+  // 7. Right 2-Jointed Articulated Wing-Arm & 4-Fingered Claw Hand Gripping Frost-Twig Sceptre
+  const rShoulderX = 8.2;
+  const rShoulderY = -2.0;
+  const rElbowX = s.isWindup ? 10.5 - s.windupProgress * 3.0 : s.isStrike ? 14.5 + s.strikeProgress * 3.5 : 12.8;
+  const rElbowY = s.isWindup ? 0.5 - s.windupProgress * 3.5 : s.isStrike ? -1.0 + s.strikeProgress * 1.5 : 1.5 - wingBeat * 0.3;
+  const rWristX = s.isWindup ? 12.5 - s.windupProgress * 3.5 : s.isStrike ? 19.5 + s.strikeProgress * 5.0 : 16.5;
+  const rWristY = s.isWindup ? -4.5 - s.windupProgress * 5.0 : s.isStrike ? -1.5 + s.strikeProgress * 3.0 : -0.5 - wingBeat * 0.6;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    5.6,
+    4.6,
+    '#1E293B',
+    '#0F172A',
+    '#475569',
+    '#DC2626'
+  );
+
+  // Frosted thorny branch sceptre with dangling icicle (pevně sevřená v pařátu)
+  const twigAngle = s.isWindup
+    ? -0.5 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.45 + s.strikeProgress * 0.6
+    : -0.15;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(twigAngle);
+
+  ctx.fillStyle = '#451A03';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.rect(-1.4, -18.0, 2.8, 25.0);
+  ctx.fill();
+  ctx.stroke();
+
+  // Sharp icicle shard at tip
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.moveTo(-2.8, -17.5);
+  ctx.lineTo(2.8, -17.5);
+  ctx.lineTo(0, -26.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, twigAngle, '#334155', '#0F172A', 3.0, '#FBBF24');
 
   ctx.restore();
 }
 
 // ---------------------------------------------------------------------------
 // 4. TAJÍCÍ SNĚHULÁK (Melting Snowman, L1 Mini-boss)
-// Archetyp: Rozšafný tající sněhulák s otlučeným hrncem, koštětem a louží
+// Archetyp: Rozšafný tající sněhulák s otlučeným hrncem, koštětem v rukavicích a louží
 // ---------------------------------------------------------------------------
 export function drawHospodaMeltingSnowman(
   ctx: CanvasRenderingContext2D,
@@ -866,63 +1175,128 @@ export function drawHospodaMeltingSnowman(
 
   if (s.isPanicked) {
     ctx.rotate(0.09);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.07 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.11 * s.strikeProgress);
   }
 
-  // 1. Sprawling Muddy Thaw Puddle
+  // 1. Sprawling Muddy Thaw Puddle & Properly Grounded Water Drips
   ctx.save();
   ctx.fillStyle = 'rgba(71, 85, 105, 0.45)';
   ctx.beginPath();
-  const puddlePulse = Math.sin(time * 3) * 2;
-  ctx.ellipse(0, 22, 26 + puddlePulse, 8, 0, 0, Math.PI * 2);
+  const puddlePulse = (s.isMoving ? Math.abs(s.stride) * 2.5 : 0) + Math.sin(time * 2.5) * 1.0;
+  ctx.ellipse(0, 22.5, 25.5 + puddlePulse, 7.8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Melting water drips
-  drawRealisticDripCycle2D(ctx, -12, 23, time, 1.2);
-  drawRealisticDripCycle2D(ctx, 14, 23, time + 0.5, 1.0);
+  // Melting water drips with explicit groundY = 23.0
+  drawRealisticDripCycle2D(ctx, -12.5, 14.0, 23.0, time, 1.25, 0.1, 2.0);
+  drawRealisticDripCycle2D(ctx, 13.5, 13.5, 23.0, time, 1.25, 0.6, 1.9);
   ctx.restore();
 
-  // 2. Bottom Snowball (Tající spodní koule s usazeným popelem a blátem)
-  ctx.fillStyle = '#F1F5F9';
+  // 2. Bottom Snowball & Coal-Booted Feet (respektující klidový postoj vx === 0 vs. chůzi vx !== 0)
+  const waddleStep = s.stride * 4.0;
+  for (const side of [-1, 1]) {
+    const shift = side === -1 ? waddleStep : -waddleStep;
+    const fx = side * 8.5 + shift;
+    ctx.fillStyle = '#334155';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.ellipse(fx, 21.2, 5.2, 2.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 3-tier gouache bottom snowball
+  ctx.fillStyle = '#E2E8F0';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
   ctx.beginPath();
-  // Flattened base
-  ctx.ellipse(0, 12, 19, 13, 0, 0, Math.PI * 2);
+  ctx.ellipse(waddleStep * 0.2, 12.0, 18.8, 12.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Mud splatters on bottom
+  // Snowball shadow & highlight
+  ctx.fillStyle = '#CBD5E1';
+  ctx.beginPath();
+  ctx.ellipse(-4.5, 15.0, 12.5, 6.5, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(5.5, 8.5, 7.5, 4.5, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mud splatters & cross-stitched burlap patch on bottom snowball
   ctx.fillStyle = '#64748B';
   ctx.beginPath();
-  ctx.arc(-8, 17, 2.5, 0, Math.PI * 2);
-  ctx.arc(7, 18, 3.0, 0, Math.PI * 2);
-  ctx.arc(0, 19, 2.0, 0, Math.PI * 2);
+  ctx.arc(-8.5, 17.2, 2.3, 0, Math.PI * 2);
+  ctx.arc(7.2, 18.0, 2.8, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.fillStyle = '#A16207';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.rect(-11.5, 8.5, 5.5, 4.5);
+  ctx.fill();
+  ctx.stroke();
 
   // Coal buttons
   ctx.fillStyle = '#1E293B';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.4;
-  for (const by of [9, 14]) {
+  ctx.lineWidth = 1.5;
+  for (const by of [9.0, 14.2]) {
     ctx.beginPath();
     ctx.arc(0, by, 2.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
 
-  // 3. Middle Snowball
-  ctx.fillStyle = '#F8FAFC';
+  // 3. Left 2-Jointed Articulated Birch-Branch Arm & Red Woolen Mitten
+  const armSway = s.isMoving ? s.stride * 3.2 : Math.sin(time * 2.3) * 0.7;
+  const lShoulderX = -13.0;
+  const lShoulderY = -1.5;
+  const lElbowX = -18.2;
+  const lElbowY = 1.5 + armSway * 0.5;
+  const lWristX = -21.5;
+  const lWristY = -1.0 + armSway;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    4.2,
+    3.5,
+    '#78350F',
+    '#451A03',
+    '#A16207',
+    '#E2E8F0'
+  );
+  drawGrippingHand2D(ctx, lWristX, lWristY, -0.4, '#DC2626', '#991B1B', 2.8);
+
+  // 4. Middle Snowball & Striped Woolen Scarf
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#F8FAFC';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.ellipse(0, 0, 15, 11, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 14.8, 10.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.ellipse(-4.0, 2.5, 8.5, 5.5, 0.15, 0, Math.PI * 2);
+  ctx.fill();
 
   // Coal button on belly
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  ctx.arc(0, 1, 2.4, 0, Math.PI * 2);
+  ctx.arc(0, 1.2, 2.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
@@ -931,169 +1305,203 @@ export function drawHospodaMeltingSnowman(
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.ellipse(0, -9, 14, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -9.0, 13.8, 4.4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // White stripes
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.rect(-9, -11, 3.5, 4.5);
-  ctx.rect(0, -11, 3.5, 4.5);
-  ctx.rect(8, -11, 3.5, 4.5);
+  ctx.rect(-9.0, -11.0, 3.4, 4.2);
+  ctx.rect(0, -11.0, 3.4, 4.2);
+  ctx.rect(7.8, -11.0, 3.4, 4.2);
   ctx.fill();
 
-  // Scarf tails fluttering
-  const scarfWave = Math.sin(time * 7) * 3;
+  const scarfWave = (s.isMoving ? s.stride * 2.5 : 0) + Math.sin(time * 5.0) * 1.6;
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.moveTo(8, -8);
-  ctx.quadraticCurveTo(18, -4 + scarfWave, 22, 6 + scarfWave);
-  ctx.lineTo(18, 7 + scarfWave);
-  ctx.lineTo(6, -6);
+  ctx.moveTo(8.0, -8.0);
+  ctx.quadraticCurveTo(17.5, -4.0 + scarfWave, 21.0, 5.5 + scarfWave);
+  ctx.lineTo(17.0, 6.8 + scarfWave);
+  ctx.lineTo(5.8, -6.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // 4. Head Snowball with Expressive Face
+  // 5. Head Snowball with Multi-Layered Expressive Coal Eyes & Carrot Nose
   ctx.fillStyle = '#FFFFFF';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.arc(0, -17, 11, 0, Math.PI * 2);
+  ctx.arc(0, -17.0, 11.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Smiling coal eyes with bright white glints
-  for (const side of [-1, 1]) {
-    const cx = side * 4.2;
-    const cy = -19;
-    ctx.fillStyle = '#0F172A';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+  // Expressive Lada coal-rimmed eyes
+  const pupilX = s.isStrike ? 0.95 : s.isWindup ? -0.45 : 0.45;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.22 : 0.05;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.5 : -0.5;
 
-    // Catchlight
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(cx + 0.8, cy - 0.9, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Cheerful coal eyebrow
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.arc(cx, cy - 4.5, 2.8, Math.PI * 0.8, Math.PI * 2.2);
-    ctx.stroke();
-  }
+  drawLadaExpressiveEye2D(
+    ctx,
+    -4.2,
+    -19.2,
+    2.6,
+    2.7,
+    '#F8FAFC',
+    s.isEnraged ? '#DC2626' : '#0F172A',
+    pupilX,
+    0,
+    eyeSquint,
+    '#1E293B',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    4.2,
+    -19.2,
+    2.6,
+    2.7,
+    '#F8FAFC',
+    s.isEnraged ? '#DC2626' : '#0F172A',
+    pupilX,
+    0,
+    eyeSquint,
+    '#1E293B',
+    -browTilt,
+    0
+  );
 
   // Giant Grooved Carrot Nose
   ctx.fillStyle = '#EA580C';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.moveTo(1, -17);
-  ctx.lineTo(17, -15);
-  ctx.lineTo(1, -13);
+  ctx.moveTo(1.0, -17.2);
+  ctx.lineTo(16.8, -15.0);
+  ctx.lineTo(1.0, -13.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Carrot rings
   ctx.strokeStyle = '#9A3412';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(6, -16.5); ctx.lineTo(6, -13.5);
-  ctx.moveTo(11, -16.0); ctx.lineTo(11, -14.0);
+  ctx.moveTo(6.0, -16.5);
+  ctx.lineTo(6.0, -13.6);
+  ctx.moveTo(11.0, -16.0);
+  ctx.lineTo(11.0, -14.1);
   ctx.stroke();
 
-  // Green carrot greens
-  ctx.strokeStyle = '#15803D';
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.moveTo(1, -17); ctx.lineTo(-2, -19);
-  ctx.moveTo(1, -15); ctx.lineTo(-3, -15);
-  ctx.stroke();
-
-  // Coal smile
+  // Coal smile pebbles
   ctx.fillStyle = '#1E293B';
   for (let i = -2; i <= 2; i++) {
     ctx.beginPath();
-    ctx.arc(i * 2.8, -12 + (i === 0 ? 1.5 : 0), 1.3, 0, Math.PI * 2);
+    ctx.arc(i * 2.8, -11.8 + (i === 0 ? 1.4 : 0), 1.35, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 5. Old Battered Enamel Cooking Pot as Hat (Otlučený hrnec s uchem)
+  // 6. Old Battered Enamel Cooking Pot as Hat (Otlučený hrnec s uchem)
   ctx.fillStyle = '#475569';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
-
   ctx.beginPath();
-  // Tilted pot on head
-  ctx.moveTo(-9, -24);
-  ctx.lineTo(-7, -34);
-  ctx.lineTo(7, -34);
-  ctx.lineTo(9, -24);
+  ctx.moveTo(-9.2, -24.0);
+  ctx.lineTo(-7.2, -34.2);
+  ctx.lineTo(7.2, -34.2);
+  ctx.lineTo(9.2, -24.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Pot rim
   ctx.fillStyle = '#334155';
   ctx.beginPath();
-  ctx.ellipse(0, -24, 10, 2.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -24.0, 10.2, 2.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Pot handle (ucho)
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.arc(-8, -29, 3.5, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.arc(-8.2, -29.0, 3.5, Math.PI * 0.5, Math.PI * 1.5);
   ctx.stroke();
 
-  // White enamel chip patch
   ctx.fillStyle = '#E2E8F0';
   ctx.beginPath();
-  ctx.arc(2, -29, 2.5, 0, Math.PI * 2);
+  ctx.arc(2.2, -29.2, 2.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // 6. Birch Broom Prop in Hand (Březové koště)
-  const broomSwing = Math.sin(time * 6) * 4;
-  ctx.strokeStyle = '#78350F';
-  ctx.lineWidth = 2.4;
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 0, -35.5, time, 1);
+  }
+
+  // 7. Right 2-Jointed Articulated Arm & 4-Fingered Mitten Hand Gripping Birch Broom
+  const rShoulderX = 12.5;
+  const rShoulderY = -1.5;
+  const rElbowX = s.isWindup ? 14.5 - s.windupProgress * 2.5 : s.isStrike ? 17.5 + s.strikeProgress * 3.0 : 16.2;
+  const rElbowY = s.isWindup ? 1.0 - s.windupProgress * 3.0 : s.isStrike ? -0.5 + s.strikeProgress * 1.5 : 2.0 - armSway * 0.4;
+  const rWristX = s.isWindup ? 16.0 - s.windupProgress * 3.5 : s.isStrike ? 22.0 + s.strikeProgress * 4.5 : 19.5;
+  const rWristY = s.isWindup ? -4.5 - s.windupProgress * 4.5 : s.isStrike ? -1.0 + s.strikeProgress * 3.5 : -0.5 - armSway * 0.7;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    4.2,
+    3.5,
+    '#78350F',
+    '#451A03',
+    '#A16207',
+    '#E2E8F0'
+  );
+
+  // Birch Broom (Březové koště pevně sevřené v rukavici)
+  const broomAngle = s.isWindup
+    ? -0.45 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.4 + s.strikeProgress * 0.6
+    : -0.15 + Math.sin(time * 3) * 0.06;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(broomAngle);
+
+  // Wooden broom shaft passing through hand (0, 0)
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-10, 2);
-  ctx.lineTo(-20, -18 + broomSwing + (s.isStrike ? 10 : 0));
+  ctx.rect(-1.4, -18.0, 2.8, 30.0);
+  ctx.fill();
   ctx.stroke();
 
-  // Birch twigs bundle
+  // Birch twigs bundle at top
   ctx.fillStyle = '#A16207';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  const bx = -20;
-  const by = -18 + broomSwing + (s.isStrike ? 10 : 0);
-  ctx.moveTo(bx - 3, by);
-  ctx.lineTo(bx - 12, by - 14);
-  ctx.lineTo(bx + 4, by - 14);
-  ctx.lineTo(bx + 3, by);
+  ctx.moveTo(-3.5, -17.5);
+  ctx.lineTo(-9.5, -31.0);
+  ctx.lineTo(9.5, -31.0);
+  ctx.lineTo(3.5, -17.5);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Twig tie string
+  // Red binding twine on twigs
   ctx.strokeStyle = '#DC2626';
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(bx - 5, by - 4);
-  ctx.lineTo(bx + 5, by - 4);
+  ctx.moveTo(-5.2, -21.0);
+  ctx.lineTo(5.2, -21.0);
   ctx.stroke();
+  ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, broomAngle, '#DC2626', '#991B1B', 2.9);
 
   ctx.restore();
 }
@@ -1121,29 +1529,32 @@ export function drawHospodaFrostGiant(
 
   if (s.isPanicked) {
     ctx.rotate(0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.13 * s.strikeProgress);
   }
 
   // 1. Ice-Cracking Shadow
   ctx.save();
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.36)';
   ctx.beginPath();
   ctx.ellipse(0, 26, 26, 8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // 2. Colossal Stone Legs & Fur-Lined Boots
-  ctx.fillStyle = '#475569';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.6;
-
-  const stride = Math.sin(time * 6) * 5;
+  // 2. Colossal Stone Legs & Fur-Lined Boots (respektující vx === 0 vs. vx !== 0)
+  const strideShift = s.stride * 5.2;
   for (const side of [-1, 1]) {
-    const lx = side * 10 + (side === -1 ? stride : -stride);
+    const lx = side * 9.8 + (side === -1 ? strideShift : -strideShift);
+    ctx.fillStyle = '#475569';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(lx - 5, 8);
-    ctx.lineTo(lx - 7, 24);
-    ctx.lineTo(lx + 7, 24);
-    ctx.lineTo(lx + 5, 8);
+    ctx.moveTo(lx - 5.0, 8.0);
+    ctx.lineTo(lx - 7.0, 24.0);
+    ctx.lineTo(lx + 7.0, 24.0);
+    ctx.lineTo(lx + 5.0, 8.0);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -1151,35 +1562,75 @@ export function drawHospodaFrostGiant(
     // Sheepskin trim on boots
     ctx.fillStyle = '#E2E8F0';
     ctx.beginPath();
-    ctx.ellipse(lx, 21, 7.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(lx, 21.0, 7.6, 3.4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     // Heavy iron studded sole
     ctx.fillStyle = '#1E293B';
-    ctx.fillRect(lx - 7, 24, 14, 3);
+    ctx.fillRect(lx - 7.0, 24.0, 14.0, 3.0);
   }
 
-  // 3. Massive Torso in Sheepskin Vest & Rope Belt
-  ctx.fillStyle = '#CBD5E1';
+  // 3. Left 2-Jointed Articulated Frost-Stone Arm & 4-Fingered Fist
+  const armSwing = s.isMoving ? s.stride * 3.5 : Math.sin(time * 2.2) * 0.8;
+  const lShoulderX = -17.5;
+  const lShoulderY = -6.5;
+  const lElbowX = -23.5;
+  const lElbowY = 0.5 + armSwing * 0.5;
+  const lWristX = -26.0;
+  const lWristY = 6.5 + armSwing;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    6.8,
+    5.6,
+    '#94A3B8',
+    '#475569',
+    '#CBD5E1',
+    '#78350F'
+  );
+  drawGrippingHand2D(ctx, lWristX, lWristY, 0.5, '#94A3B8', '#475569', 3.6);
+
+  // 4. Massive 3-Tier Gouache Torso in Patched Sheepskin Vest & Rope Belt
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#CBD5E1';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 3.0;
+  ctx.lineWidth = 2.8;
   ctx.beginPath();
-  ctx.ellipse(0, 0, 22, 18, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 21.5, 17.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Sheepskin vest over shoulders
+  // Sheepskin vest over shoulders with 3-tier shading
   ctx.fillStyle = '#78350F';
   ctx.beginPath();
-  ctx.moveTo(-18, -14);
-  ctx.lineTo(18, -14);
-  ctx.lineTo(16, 6);
-  ctx.lineTo(6, 4);
-  ctx.lineTo(0, 7);
-  ctx.lineTo(-6, 4);
-  ctx.lineTo(-16, 6);
+  ctx.moveTo(-18.0, -14.0);
+  ctx.lineTo(18.0, -14.0);
+  ctx.lineTo(16.2, 6.2);
+  ctx.lineTo(6.0, 4.2);
+  ctx.lineTo(0, 7.2);
+  ctx.lineTo(-6.0, 4.2);
+  ctx.lineTo(-16.2, 6.2);
   ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#451A03';
+  ctx.fillRect(-15.0, 1.5, 10.0, 3.5);
+  ctx.fillStyle = '#92400E';
+  ctx.fillRect(4.5, -11.5, 8.5, 6.5);
+
+  // Cross-stitched patch on vest
+  ctx.fillStyle = '#B45309';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.rect(-12.5, -7.5, 6.5, 5.2);
   ctx.fill();
   ctx.stroke();
 
@@ -1187,23 +1638,24 @@ export function drawHospodaFrostGiant(
   ctx.strokeStyle = '#D97706';
   ctx.lineWidth = 3.5;
   ctx.beginPath();
-  ctx.moveTo(-19, 7); ctx.lineTo(19, 7);
+  ctx.moveTo(-19.0, 7.2);
+  ctx.lineTo(19.0, 7.2);
   ctx.stroke();
 
   ctx.fillStyle = '#92400E';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.rect(-5, 4.5, 10, 6);
+  ctx.rect(-5.0, 4.5, 10.0, 6.0);
   ctx.fill();
   ctx.stroke();
 
-  // 4. Huge Stone-Hewn Head with Icicle Beard & Bushy Eyebrows
+  // 5. Huge Stone-Hewn Head with Icicle Beard & Multi-Layered Expressive Eyes
   ctx.fillStyle = '#94A3B8';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.6;
   ctx.beginPath();
-  ctx.arc(0, -16, 13, 0, Math.PI * 2);
+  ctx.arc(0, -16.0, 13.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
@@ -1211,13 +1663,13 @@ export function drawHospodaFrostGiant(
   ctx.fillStyle = '#E0F2FE';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
-  const iciclePoints = [
+  const iciclePoints: Array<[number, number, number, number]> = [
     [-10, -10, -11, 4],
     [-6, -9, -7, 9],
     [-2, -8, -3, 13],
     [2, -8, 2, 14],
     [6, -9, 6, 8],
-    [10, -10, 9, 3]
+    [10, -10, 9, 3],
   ];
   for (const [bx, by, tx, ty] of iciclePoints) {
     ctx.beginPath();
@@ -1229,117 +1681,147 @@ export function drawHospodaFrostGiant(
     ctx.stroke();
   }
 
-  // Furiant V-shaped bushy frost eyebrows
-  ctx.strokeStyle = '#F1F5F9';
-  ctx.lineWidth = 3.2;
-  ctx.beginPath();
-  ctx.moveTo(-10, -23);
-  ctx.lineTo(-1, -19);
-  ctx.lineTo(9, -23);
-  ctx.stroke();
+  // Multi-layered Lada expressive giant eyes
+  const pupilX = s.isStrike ? 1.1 : s.isWindup ? -0.5 : 0.55;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.25 : 0.08;
+  const browTilt = s.isAttacking || s.isEnraged ? 2.0 : 1.1;
 
-  // Fiery blue giant eyes
-  for (const side of [-1, 1]) {
-    const ex = side * 5.0;
-    const ey = -18;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 3.5, 3.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+  drawLadaExpressiveEye2D(
+    ctx,
+    -5.0,
+    -18.0,
+    3.4,
+    3.2,
+    '#FFFFFF',
+    s.isEnraged ? '#EF4444' : '#0284C7',
+    pupilX,
+    0,
+    eyeSquint,
+    '#F1F5F9',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    5.0,
+    -18.0,
+    3.4,
+    3.2,
+    '#FFFFFF',
+    s.isEnraged ? '#EF4444' : '#0284C7',
+    pupilX,
+    0,
+    eyeSquint,
+    '#F1F5F9',
+    -browTilt,
+    0
+  );
 
-    ctx.fillStyle = '#0284C7';
-    ctx.beginPath();
-    ctx.arc(ex, ey, 1.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#0F172A';
-    ctx.beginPath();
-    ctx.arc(ex, ey, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Catchlight
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(ex + 1.0, ey - 1.0, 0.8, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Broad bulbous frostbitten nose with bluish blush
+  // Broad bulbous frostbitten nose with bluish blush & warts
   ctx.fillStyle = '#64748B';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(0, -14.5, 3.5, 0, Math.PI * 2);
+  ctx.arc(0, -14.5, 3.6, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // Bared angry teeth
   ctx.fillStyle = '#F8FAFC';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.rect(-6, -10, 12, 4);
+  ctx.rect(-6.0, -10.0, 12.0, 4.0);
   ctx.fill();
   ctx.stroke();
   for (let t = -4; t <= 4; t += 2) {
     ctx.beginPath();
-    ctx.moveTo(t, -10); ctx.lineTo(t, -6);
+    ctx.moveTo(t, -10.0);
+    ctx.lineTo(t, -6.0);
     ctx.stroke();
   }
 
   // Steam chugging from nostrils
-  drawFuriantSteamPuffs(ctx, 0, -12, time, 1);
+  drawFuriantSteamPuffs(ctx, 0, -12.0, time, 1);
 
-  // 5. Giant Fir Tree Trunk Club (Celý kmen zasněžené jedle)
-  const clubLift = s.isWindup ? -18 : s.isStrike ? 12 : 0;
+  // 6. Right 2-Jointed Articulated Frost-Stone Arm & 4-Fingered Hand Gripping Giant Fir Tree Trunk Club
+  const rShoulderX = 16.5;
+  const rShoulderY = -6.0;
+  const rElbowX = s.isWindup ? 18.0 - s.windupProgress * 3.0 : s.isStrike ? 22.0 + s.strikeProgress * 3.5 : 20.5;
+  const rElbowY = s.isWindup ? -2.0 - s.windupProgress * 4.5 : s.isStrike ? 0.5 + s.strikeProgress * 2.0 : 0.5 - armSwing * 0.4;
+  const rWristX = s.isWindup ? 19.5 - s.windupProgress * 4.0 : s.isStrike ? 26.5 + s.strikeProgress * 5.0 : 23.5;
+  const rWristY = s.isWindup ? -9.5 - s.windupProgress * 6.0 : s.isStrike ? -1.5 + s.strikeProgress * 4.5 : -2.5 - armSwing * 0.7;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    6.8,
+    5.6,
+    '#94A3B8',
+    '#475569',
+    '#CBD5E1',
+    '#78350F'
+  );
+
+  // Giant Uprooted Fir Tree Trunk Club (Celý kmen zasněžené jedle pevně sevřený v dlani)
+  const clubAngle = s.isWindup
+    ? -0.45 - s.windupProgress * 0.5
+    : s.isStrike
+    ? 0.4 + s.strikeProgress * 0.65
+    : -0.15;
+
   ctx.save();
-  ctx.translate(18, -4 + clubLift);
-  ctx.rotate(s.isStrike ? 0.4 : -0.2);
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(clubAngle);
 
-  // Trunk
+  // Trunk passing directly through giant's hand at (0, 0)
   ctx.fillStyle = '#451A03';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.6;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
-  ctx.moveTo(-4, 18);
-  ctx.lineTo(4, 18);
-  ctx.lineTo(7, -30);
-  ctx.lineTo(-7, -30);
+  ctx.moveTo(-3.8, 16.0);
+  ctx.lineTo(3.8, 16.0);
+  ctx.lineTo(6.5, -28.0);
+  ctx.lineTo(-6.5, -28.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Fir needle tufts on club top
+  // Fir needle crown on club top
   ctx.fillStyle = '#14532D';
   ctx.beginPath();
-  ctx.moveTo(0, -38);
-  ctx.lineTo(12, -26);
-  ctx.lineTo(5, -26);
-  ctx.lineTo(14, -16);
-  ctx.lineTo(-14, -16);
-  ctx.lineTo(-5, -26);
-  ctx.lineTo(-12, -26);
+  ctx.moveTo(0, -37.0);
+  ctx.lineTo(11.5, -25.0);
+  ctx.lineTo(5.0, -25.0);
+  ctx.lineTo(13.5, -15.0);
+  ctx.lineTo(-13.5, -15.0);
+  ctx.lineTo(-5.0, -25.0);
+  ctx.lineTo(-11.5, -25.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Snow cap on fir
+  // Snow cap on fir crown
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(0, -36, 4, 0, Math.PI * 2);
+  ctx.arc(0, -35.0, 4.0, 0, Math.PI * 2);
   ctx.fill();
-
+  ctx.stroke();
   ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, clubAngle, '#94A3B8', '#475569', 3.8);
 
   ctx.restore();
 }
 
 // ---------------------------------------------------------------------------
 // 6. OBŘÍ KOLEDNICKÝ BERÁNEK (Beránek, L2 Mini-boss)
-// Archetyp: Rozšafný a rozverný upečený velikonoční beránek se zlatým zvoncem
+// Archetyp: Rozšafný a rozverný upečený velikonoční beránek se zlatým zvoncem a korouhvičkou
 // ---------------------------------------------------------------------------
 export function drawHospodaBeranek(
   ctx: CanvasRenderingContext2D,
@@ -1360,54 +1842,82 @@ export function drawHospodaBeranek(
 
   if (s.isPanicked) {
     ctx.rotate(0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.14 * s.strikeProgress);
   }
 
   // 1. Festive Easter Meadow Shadow
   ctx.save();
   ctx.fillStyle = 'rgba(22, 101, 52, 0.28)';
   ctx.beginPath();
-  ctx.ellipse(0, 20, 22, 7, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 20.5, 22, 6.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // 2. Golden-Baked Biscuit Pastry Body with Fluffy Sugar Wool Texture
-  ctx.fillStyle = '#FDE68A'; // Golden sponge cake
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.4;
+  // 2. Four Articulated Baked Trotters in Buckled Slippers (respektující vx === 0 vs. vx !== 0)
+  const gallop = s.stride * 4.5;
+  const legPositions: Array<[number, number, string]> = [
+    [-12.5, -gallop * 0.8, '#B45309'],
+    [-7.5, gallop, '#D97706'],
+    [6.5, -gallop, '#B45309'],
+    [11.5, gallop * 0.8, '#D97706'],
+  ];
 
-  // Trotters / hooves in little leather buckled slippers
-  const gallop = Math.sin(time * 11) * 4;
-  for (const side of [-1, 1]) {
-    const hx = side * 11 + (side === -1 ? gallop : -gallop);
-    ctx.fillStyle = '#D97706';
+  for (const [baseX, shift, col] of legPositions) {
+    const hx = baseX + shift;
+    ctx.fillStyle = col;
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.moveTo(hx - 3, 10);
-    ctx.lineTo(hx - 3, 20);
-    ctx.lineTo(hx + 3, 20);
-    ctx.lineTo(hx + 3, 10);
+    ctx.moveTo(hx - 2.6, 9.5);
+    ctx.lineTo(hx - 2.8, 19.5);
+    ctx.lineTo(hx + 2.8, 19.5);
+    ctx.lineTo(hx + 2.6, 9.5);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Little black hoof tip
+    // Little black hoof tip with brass buckle
     ctx.fillStyle = '#1C1917';
-    ctx.fillRect(hx - 3.5, 18, 7, 3);
+    ctx.fillRect(hx - 3.2, 17.8, 6.4, 2.8);
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillRect(hx - 1.2, 18.2, 2.4, 1.4);
   }
 
-  // Plump baked body
-  ctx.fillStyle = '#FDE68A';
+  // 3. 3-Tier Golden-Baked Biscuit Pastry Body with Fluffy Sugar Wool Texture
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#FDE68A';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.ellipse(0, 4, 18, 14, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 3.8, 18.2, 13.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+
+  // Golden baked crust shadow & highlight
+  ctx.fillStyle = '#D97706';
+  ctx.beginPath();
+  ctx.ellipse(-3.5, 9.2, 13.5, 5.5, 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.ellipse(3.0, -1.5, 10.5, 4.8, -0.08, 0, Math.PI * 2);
+  ctx.fill();
 
   // Confectioner's White Sugar Wool Puffs (Cukrová poleva s vlnkami)
   ctx.fillStyle = '#FFFFFF';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
-  const woolPuffs = [
-    [-12, 0, 5], [-6, -4, 6], [2, -5, 6], [10, -2, 5],
-    [-10, 6, 5], [-3, 6, 6], [6, 6, 5.5], [12, 4, 4.5]
+  const woolPuffs: Array<[number, number, number]> = [
+    [-12, 0, 5.0],
+    [-6, -4, 6.0],
+    [2, -5, 6.0],
+    [10, -2, 5.0],
+    [-10, 6, 5.0],
+    [-3, 6, 6.0],
+    [6, 6, 5.5],
+    [12, 4, 4.5],
   ];
   for (const [wx, wy, wr] of woolPuffs) {
     ctx.beginPath();
@@ -1416,150 +1926,184 @@ export function drawHospodaBeranek(
     ctx.stroke();
   }
 
-  // Fluffy little tail with pink ribbon
+  // Festive Easter Sugar-Cross Banner tucked into wool back
+  ctx.save();
+  ctx.translate(-4.0, -5.0);
+  ctx.rotate(-0.15 + (s.isMoving ? s.stride * 0.08 : 0));
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.arc(-18, 2, 4.5, 0, Math.PI * 2);
+  ctx.moveTo(0, 4);
+  ctx.lineTo(0, -18);
+  ctx.stroke();
+
+  // Red & white folk pennant flag
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(0, -17.5);
+  ctx.lineTo(-12.5, -14.0);
+  ctx.lineTo(-9.5, -11.0);
+  ctx.lineTo(-12.5, -8.0);
+  ctx.lineTo(0, -8.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(-2, -13.0);
+  ctx.lineTo(-8, -13.0);
+  ctx.moveTo(-5, -15.5);
+  ctx.lineTo(-5, -10.5);
+  ctx.stroke();
+  ctx.restore();
+
+  // Fluffy little tail with pink ribbon
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(-18.2, 2.0, 4.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = '#EC4899';
   ctx.beginPath();
-  ctx.ellipse(-19, 1, 3, 2, 0.4, 0, Math.PI * 2);
+  ctx.ellipse(-19.0, 1.0, 3.0, 2.0, 0.4, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
 
   // Red Silk Neck Ribbon with Golden Brass Bell (Červená pentle se zvonkem)
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.ellipse(7, -6, 7.5, 3.5, 0.4, 0, Math.PI * 2);
+  ctx.ellipse(7.2, -6.0, 7.6, 3.5, 0.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Golden Bell with Clapper
-  const bellSwing = Math.sin(time * 12) * 3;
+  const bellSwing = (s.isMoving ? s.stride * 3.0 : 0) + Math.sin(time * 5.0) * 1.2;
   ctx.fillStyle = '#F59E0B';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(9 + bellSwing * 0.4, -1, 3.5, Math.PI, 0);
-  ctx.lineTo(13.5 + bellSwing * 0.4, 3);
-  ctx.lineTo(4.5 + bellSwing * 0.4, 3);
+  ctx.arc(9.2 + bellSwing * 0.35, -1.0, 3.5, Math.PI, 0);
+  ctx.lineTo(13.6 + bellSwing * 0.35, 3.0);
+  ctx.lineTo(4.6 + bellSwing * 0.35, 3.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Bell clapper
   ctx.fillStyle = '#78350F';
   ctx.beginPath();
-  ctx.arc(9 + bellSwing * 0.4, 4, 1.2, 0, Math.PI * 2);
+  ctx.arc(9.2 + bellSwing * 0.35, 4.0, 1.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // Little musical ding ring
-  drawMusicNote2D(ctx, 15, -4, 0, 0.8);
+  if (s.isMoving || s.isAttacking) {
+    drawMusicNote2D(ctx, 15.5, -4.0, 0, 0.8);
+  }
 
-  // 3. Cute Baked Lamb Head with Curly Horns & Rosy Cheeks
+  // 4. Baked Lamb Head with Curly Horns & Multi-Layered Expressive Eye
+  const headTilt = s.isStrike ? 0.22 * s.strikeProgress : s.isWindup ? -0.15 * s.windupProgress : -0.18;
+  ctx.save();
+  ctx.translate(12.0, -14.0);
+  ctx.rotate(headTilt);
+
   ctx.fillStyle = '#FDE68A';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.ellipse(12, -14, 9, 8, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 9.2, 8.0, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // White sugar curl on forehead
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(10, -18, 4, 0, Math.PI * 2);
+  ctx.arc(-2.0, -4.2, 4.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   // Golden curly butter horns
-  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(-4.5, -5.0, 4.6, Math.PI * 0.75, Math.PI * 2.2);
+  ctx.stroke();
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
-  // Left horn
   ctx.beginPath();
-  ctx.arc(7, -19, 4.5, Math.PI * 0.8, Math.PI * 2.2);
-  ctx.stroke();
-  // Right horn
-  ctx.beginPath();
-  ctx.arc(15, -20, 4.5, Math.PI * 0.7, Math.PI * 2.1);
+  ctx.arc(3.0, -5.8, 4.6, Math.PI * 0.7, Math.PI * 2.1);
   ctx.stroke();
 
-  // Soft long droopy lamb ears
+  // Soft long droopy lamb ear
   ctx.fillStyle = '#FBCFE8';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.ellipse(4, -13, 6, 2.5, 0.5, 0, Math.PI * 2);
+  ctx.ellipse(-7.8, 1.0, 5.8, 2.5, 0.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Big gentle Ladovské sheep eye with lush eyelashes
-  ctx.fillStyle = '#FFFFFF';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.ellipse(13, -15, 3.8, 4.0, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  // Multi-layered Lada expressive eye
+  const pupilX = s.isStrike ? 0.9 : s.isWindup ? -0.4 : 0.45;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.2 : 0;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.4 : -0.5;
 
-  ctx.fillStyle = '#78350F';
-  ctx.beginPath();
-  ctx.arc(14, -15, 2.0, 0, Math.PI * 2);
-  ctx.fill();
+  drawLadaExpressiveEye2D(
+    ctx,
+    1.5,
+    -1.2,
+    3.3,
+    3.5,
+    '#FFFFFF',
+    s.isEnraged ? '#DC2626' : '#78350F',
+    pupilX,
+    0,
+    eyeSquint,
+    '#78350F',
+    -browTilt,
+    0
+  );
 
-  ctx.fillStyle = '#1C1917';
+  // Rosy cheek & freckles
+  ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
   ctx.beginPath();
-  ctx.ellipse(14.2, -15, 1.8, 1.0, 0, 0, Math.PI * 2);
+  ctx.arc(-1.0, 2.8, 2.5, 0, Math.PI * 2);
   ctx.fill();
-
-  // Catchlight
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(14.8, -16.2, 0.9, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eyelashes
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(11, -18.5); ctx.lineTo(10, -20.5);
-  ctx.moveTo(14, -19); ctx.lineTo(14, -21.5);
-  ctx.moveTo(16, -18.5); ctx.lineTo(17, -20.5);
-  ctx.stroke();
 
   // Pink snout & chewing mouth with spring clover
   ctx.fillStyle = '#F472B6';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.ellipse(19, -12, 2.5, 2.0, 0, 0, Math.PI * 2);
+  ctx.ellipse(7.0, 1.8, 2.5, 2.0, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Green clover stem in mouth
   ctx.strokeStyle = '#15803D';
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.moveTo(19, -11);
-  ctx.quadraticCurveTo(24, -10, 27, -7);
+  ctx.moveTo(7.0, 2.8);
+  ctx.quadraticCurveTo(12.0, 3.8, 15.0, 6.8);
   ctx.stroke();
 
-  // 3-leaf clover
-  drawFolkFlower2D(ctx, 28, -7, 3.2, '#22C55E', '#166534');
+  drawFolkFlower2D(ctx, 16.0, 6.8, 3.2, '#22C55E', '#166534');
 
-  // Rosy cheek
-  ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
-  ctx.beginPath();
-  ctx.arc(11, -11, 2.5, 0, Math.PI * 2);
-  ctx.fill();
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 9.5, -2.0, time, 1);
+  }
+  ctx.restore();
 
   ctx.restore();
 }
 
 // ---------------------------------------------------------------------------
 // 7. KLEKÁNICE (Klekanice, L3 Mini-boss)
-// Archetyp: Zlomyslná a potměšilá večerní babice s mosazným zvonem a nůší
+// Archetyp: Zlomyslná a potměšilá večerní babice s mosazným zvonem, holí a proutěnou nůší
 // ---------------------------------------------------------------------------
 export function drawHospodaKlekanice(
   ctx: CanvasRenderingContext2D,
@@ -1580,147 +2124,252 @@ export function drawHospodaKlekanice(
 
   if (s.isPanicked) {
     ctx.rotate(-0.09);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.13 * s.strikeProgress);
   }
 
   // 1. Creeping Evening Dusk Shadow
   ctx.save();
-  ctx.fillStyle = 'rgba(30, 27, 75, 0.35)';
+  ctx.fillStyle = 'rgba(30, 27, 75, 0.36)';
   ctx.beginPath();
-  ctx.ellipse(0, 22, 22, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 22.5, 22, 6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // 2. Heavy Peasant Wool Skirt & Patched Apron (Tmavomodrá sukně a zástěra)
-  ctx.fillStyle = '#1E1B4B'; // Midnight blue skirt
+  // 2. Wicker Basket on Back (Proutěná nůše na neposlušné děti)
+  ctx.fillStyle = '#92400E';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(-15.5, -16.0);
+  ctx.lineTo(-5.5, -16.0);
+  ctx.lineTo(-7.0, 5.0);
+  ctx.lineTo(-14.0, 5.0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Wicker weave cross-lines on basket
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 1.2;
+  for (const wy of [-12, -7, -2]) {
+    ctx.beginPath();
+    ctx.moveTo(-15.0, wy);
+    ctx.lineTo(-6.2, wy);
+    ctx.stroke();
+  }
+
+  // 3. Heavy Studded Boots (respektující klidový postoj vx === 0 vs. chůzi vx !== 0)
+  const legStep = s.stride * 4.2;
+  for (const side of [-1, 1]) {
+    const bx = side * 5.2 + (side === -1 ? legStep : -legStep);
+    ctx.fillStyle = '#0F172A';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.rect(bx - 3.0, 18.2, 6.2, 4.2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 4. 3-Tier Gouache Peasant Wool Skirt & Patched Apron (Tmavomodrá sukně a zástěra)
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#1E1B4B';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
   ctx.beginPath();
-  ctx.moveTo(-11, -2);
-  ctx.lineTo(11, -2);
-  ctx.lineTo(14, 20);
-  ctx.lineTo(-14, 20);
+  ctx.moveTo(-11.0, -2.0);
+  ctx.lineTo(11.0, -2.0);
+  ctx.lineTo(14.2, 19.5);
+  ctx.lineTo(-14.2, 19.5);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Heavy studded boots peaking from skirt
+  // Skirt shadow & folk hem border
   ctx.fillStyle = '#0F172A';
+  ctx.fillRect(-13.0, 15.5, 26.0, 3.2);
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.rect(-8, 19, 6, 3.5);
-  ctx.rect(3, 19, 6, 3.5);
-  ctx.fill();
+  ctx.moveTo(-13.5, 17.5);
+  ctx.lineTo(13.5, 17.5);
   ctx.stroke();
 
-  // Ochre patched apron (Záplatovaná zástěra s kapsou)
+  // Ochre patched apron with pocket & poppy heads (makovice)
   ctx.fillStyle = '#B45309';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 1.9;
   ctx.beginPath();
-  ctx.moveTo(-7, 0);
-  ctx.lineTo(7, 0);
-  ctx.lineTo(8, 17);
-  ctx.lineTo(-8, 17);
+  ctx.moveTo(-7.2, 0);
+  ctx.lineTo(7.2, 0);
+  ctx.lineTo(8.2, 16.8);
+  ctx.lineTo(-8.2, 16.8);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Deep apron pocket with poppy heads (makovice) peaking out
   ctx.fillStyle = '#92400E';
   ctx.beginPath();
-  ctx.rect(-5, 6, 10, 8);
+  ctx.rect(-5.0, 6.0, 10.0, 7.8);
+  ctx.fill();
+  ctx.stroke();
+
+  // Cross-stitched patch on apron
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.rect(1.5, 11.2, 4.2, 3.6);
   ctx.fill();
   ctx.stroke();
 
   // Poppy heads in pocket
   ctx.fillStyle = '#4B5563';
   ctx.beginPath();
-  ctx.arc(-2, 5, 2.2, 0, Math.PI * 2);
-  ctx.arc(2, 4.5, 2.0, 0, Math.PI * 2);
+  ctx.arc(-2.0, 5.0, 2.2, 0, Math.PI * 2);
+  ctx.arc(2.0, 4.5, 2.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // 3. Hunched Shoulders in Shawl (Puntíkovaný vlněný šátek přes ramena)
+  // 5. Hunched Shoulders in Polka-Dot Shawl
   ctx.fillStyle = '#7C2D12';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.ellipse(0, -5, 12, 7.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -5.0, 12.2, 7.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // White polka dots
   ctx.fillStyle = '#FEF3C7';
-  for (const [px, py] of [[-7, -5], [-3, -7], [3, -7], [7, -5], [0, -3]]) {
+  for (const [px, py] of [
+    [-7, -5],
+    [-3, -7],
+    [3, -7],
+    [7, -5],
+    [0, -3],
+  ]) {
     ctx.beginPath();
-    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+    ctx.arc(px, py, 1.15, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 4. Shrewd Old Witch Face with Hooked Nose & Wart
+  // 6. Left 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Crooked Cane
+  const armSway = s.isMoving ? s.stride * 3.0 : Math.sin(time * 2.5) * 0.7;
+  const lShoulderX = -9.5;
+  const lShoulderY = -4.2;
+  const lElbowX = -14.2;
+  const lElbowY = 0.5 + armSway * 0.4;
+  const lWristX = -16.2;
+  const lWristY = 5.0 + armSway * 0.8;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    4.6,
+    3.8,
+    '#7C2D12',
+    '#451A03',
+    '#9A3412',
+    '#FEF3C7'
+  );
+
+  // Crooked wooden cane (sukovice) held in left hand
+  ctx.save();
+  ctx.translate(lWristX, lWristY);
+  ctx.strokeStyle = '#451A03';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(0, -4.0);
+  ctx.lineTo(-1.5, 16.5);
+  ctx.stroke();
+  ctx.restore();
+
+  drawGrippingHand2D(ctx, lWristX, lWristY, 0.2, '#F2CCB6', '#D9A07A', 2.6);
+
+  // 7. Shrewd Old Witch Face with Hooked Nose, Wart & Multi-Layered Expressive Eyes
   ctx.fillStyle = '#F2CCB6';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.arc(0, -14, 9, 0, Math.PI * 2);
+  ctx.arc(0, -14.0, 9.0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Prominent hooked Ladovský nose with hair/wart
-  ctx.fillStyle = '#E59B7D';
+  // Blue kerchief tied tight over head & knot under chin
+  ctx.fillStyle = '#0369A1';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.8;
+  ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.moveTo(0, -16);
-  ctx.quadraticCurveTo(8, -14, 8, -10);
-  ctx.quadraticCurveTo(2, -9, 0, -12);
+  ctx.arc(0, -16.0, 11.0, Math.PI * 0.8, Math.PI * 2.2);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Wart with dark hair
-  ctx.fillStyle = '#78350F';
+  ctx.fillStyle = '#0284C7';
   ctx.beginPath();
-  ctx.arc(6, -11, 1.2, 0, Math.PI * 2);
+  ctx.arc(0, -6.4, 2.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.0;
-  ctx.beginPath();
-  ctx.moveTo(6, -11); ctx.lineTo(8, -12.5);
   ctx.stroke();
 
-  // Shrewd yellow cat-like eyes
-  for (const side of [-1, 1]) {
-    const ex = side * 3.5;
-    const ey = -16;
-    ctx.fillStyle = '#FEF08A';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 2.8, 2.5, -side * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+  // Multi-layered Lada expressive cat-yellow eyes
+  const pupilX = s.isStrike ? 0.95 : s.isWindup ? -0.45 : 0.45;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.24 : 0.1;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.6 : 0.8;
 
-    ctx.fillStyle = '#0F172A';
-    ctx.beginPath();
-    ctx.arc(ex + (s.isAttacking ? side * 0.8 : 0.4), ey, 1.2, 0, Math.PI * 2);
-    ctx.fill();
+  drawLadaExpressiveEye2D(
+    ctx,
+    -3.5,
+    -15.8,
+    2.7,
+    2.5,
+    '#FEF08A',
+    s.isEnraged ? '#DC2626' : '#0F172A',
+    pupilX,
+    0,
+    eyeSquint,
+    '#451A03',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    3.5,
+    -15.8,
+    2.7,
+    2.5,
+    '#FEF08A',
+    s.isEnraged ? '#DC2626' : '#0F172A',
+    pupilX,
+    0,
+    eyeSquint,
+    '#451A03',
+    -browTilt,
+    0
+  );
 
-    // Catchlight
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(ex + 0.8, ey - 0.8, 0.7, 0, Math.PI * 2);
-    ctx.fill();
+  // Prominent hooked Ladovský nose with wart & bristle hair
+  ctx.fillStyle = '#E59B7D';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(0, -15.8);
+  ctx.quadraticCurveTo(8.0, -14.0, 8.0, -10.0);
+  ctx.quadraticCurveTo(2.0, -9.0, 0, -12.0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
 
-    // Knitted bushy brow
-    ctx.strokeStyle = '#451A03';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(ex - 2.5, ey - 3.5);
-    ctx.lineTo(ex + 2.5, ey - 2.5);
-    ctx.stroke();
-  }
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.arc(5.8, -11.0, 1.2, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Toothless cackling mouth
+  // Toothless cackling mouth with single crooked tooth
   ctx.fillStyle = '#450A0A';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
@@ -1730,69 +2379,83 @@ export function drawHospodaKlekanice(
   ctx.fill();
   ctx.stroke();
 
-  // Single crooked tooth
   ctx.fillStyle = '#FEF08A';
   ctx.fillRect(-1.0, -10.5, 1.8, 2.2);
 
-  // Kerchief tied tight over head (Šátek uvázaný pod bradou)
-  ctx.fillStyle = '#0369A1';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.arc(0, -16, 11, Math.PI * 0.8, Math.PI * 2.2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Kerchief knot under chin
-  ctx.fillStyle = '#0284C7';
-  ctx.beginPath();
-  ctx.arc(0, -6.5, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // 5. Heavy Brass Curfew Bell (Těžký mosazný zvon s provazem)
-  const bellSwing = Math.sin(time * 9) * 5;
-  ctx.save();
-  ctx.translate(-14, 4 + bellSwing);
-  ctx.rotate(bellSwing * 0.05);
-
-  // Bell body
-  ctx.fillStyle = '#F59E0B';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.arc(0, -8, 6, Math.PI, 0);
-  ctx.quadraticCurveTo(8, 0, 10, 6);
-  ctx.lineTo(-10, 6);
-  ctx.quadraticCurveTo(-8, 0, 0, -8);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Clapper swinging out
-  ctx.fillStyle = '#78350F';
-  ctx.beginPath();
-  ctx.arc(0, 8, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // Sound rings
-  if (s.isAttacking) {
-    drawMusicNote2D(ctx, -12, -4, 0, 1.0);
-    drawMusicNote2D(ctx, -8, -12, 1, 1.2);
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 0, -24.5, time, 1);
   }
 
-  ctx.restore();
+  // 8. Right 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Brass Curfew Bell
+  const rShoulderX = 9.2;
+  const rShoulderY = -4.0;
+  const rElbowX = s.isWindup ? 11.2 - s.windupProgress * 2.5 : s.isStrike ? 14.5 + s.strikeProgress * 3.0 : 12.8;
+  const rElbowY = s.isWindup ? -0.5 - s.windupProgress * 3.0 : s.isStrike ? 0.5 + s.strikeProgress * 1.5 : 1.5 - armSway * 0.4;
+  const rWristX = s.isWindup ? 13.0 - s.windupProgress * 3.0 : s.isStrike ? 18.5 + s.strikeProgress * 4.5 : 15.8;
+  const rWristY = s.isWindup ? -5.0 - s.windupProgress * 4.5 : s.isStrike ? 0.5 + s.strikeProgress * 3.5 : 2.5 - armSway * 0.8;
 
-  // Long spindly 4-fingered claw hand gripping bell rope
-  ctx.fillStyle = '#F2CCB6';
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    4.6,
+    3.8,
+    '#7C2D12',
+    '#451A03',
+    '#9A3412',
+    '#FEF3C7'
+  );
+
+  // Heavy Brass Curfew Bell (Těžký mosazný klekániční zvon pevně sevřený za rukojeť)
+  const bellAngle = s.isWindup
+    ? -0.5 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.55 + s.strikeProgress * 0.6
+    : Math.sin(time * 6) * 0.14;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(bellAngle);
+
+  // Wooden bell handle passing through hand (0, 0)
+  ctx.fillStyle = '#451A03';
   ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 1.6;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(-10, 2, 2.8, 0, Math.PI * 2);
+  ctx.rect(-1.5, -4.5, 3.0, 8.5);
   ctx.fill();
   ctx.stroke();
+
+  // Brass bell dome below handle
+  ctx.fillStyle = '#F59E0B';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.arc(0, 5.5, 5.2, Math.PI, 0);
+  ctx.quadraticCurveTo(7.2, 11.5, 8.8, 16.0);
+  ctx.lineTo(-8.8, 16.0);
+  ctx.quadraticCurveTo(-7.2, 11.5, -5.2, 5.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Bell clapper
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.arc(0, 17.5, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  if (s.isAttacking || s.isEnraged) {
+    drawMusicNote2D(ctx, 11.5, 6.0, 0, 0.95);
+    drawMusicNote2D(ctx, 8.5, -3.5, 1, 1.05);
+  }
+  ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, bellAngle, '#F2CCB6', '#D9A07A', 2.7);
 
   ctx.restore();
 }
@@ -1820,191 +2483,290 @@ export function drawHospodaBroomWitchZaspalka(
 
   if (s.isPanicked) {
     ctx.rotate(0.12);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.14 * s.strikeProgress);
   }
 
   // 1. Midnight Aerial Shadow
   ctx.save();
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
   ctx.beginPath();
-  ctx.ellipse(0, 24, 22, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 24.0, 22, 5.2, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
   // 2. Flying Birch Broom (Staré březové koště s uzlem a větvičkami)
-  const broomTilt = Math.sin(time * 6) * 3;
+  const broomTilt = (s.isMoving ? s.stride * 1.8 : 0) + Math.sin(time * 4.5) * 1.2;
   ctx.save();
-  ctx.rotate(0.1 + (s.isStrike ? 0.25 : 0));
+  ctx.rotate(0.08 + (s.isStrike ? 0.22 * s.strikeProgress : 0));
 
-  // Broomstick handle
-  ctx.strokeStyle = '#78350F';
-  ctx.lineWidth = 3.2;
+  // Ash broomstick handle
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-28, 4 + broomTilt);
-  ctx.lineTo(24, 2 + broomTilt);
+  ctx.rect(-28.0, 2.2 + broomTilt, 52.0, 3.2);
+  ctx.fill();
   ctx.stroke();
 
-  // Birch twigs bundle at back
+  // Birch twigs bundle at back with red twine binding
   ctx.fillStyle = '#92400E';
-  ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.moveTo(-22, 4 + broomTilt);
-  ctx.lineTo(-34, -4 + broomTilt);
-  ctx.lineTo(-38, 12 + broomTilt);
-  ctx.lineTo(-24, 8 + broomTilt);
+  ctx.moveTo(-22.0, 3.8 + broomTilt);
+  ctx.lineTo(-35.0, -4.2 + broomTilt);
+  ctx.lineTo(-38.5, 11.8 + broomTilt);
+  ctx.lineTo(-23.5, 7.8 + broomTilt);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Dangling Brass Lantern on Broom Front
-  ctx.strokeStyle = '#D97706';
-  ctx.lineWidth = 1.8;
-  const lanternSwing = Math.sin(time * 8) * 4;
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(22, 2 + broomTilt);
-  ctx.lineTo(22 + lanternSwing * 0.3, 10 + broomTilt);
+  ctx.moveTo(-25.0, 0.5 + broomTilt);
+  ctx.lineTo(-25.0, 8.5 + broomTilt);
   ctx.stroke();
 
-  // Glowing lantern body
+  // Dangling Brass Lantern on Broom Front
+  const lanternSwing = (s.isMoving ? s.stride * 3.5 : 0) + Math.sin(time * 6.5) * 2.0;
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(22.0, 3.5 + broomTilt);
+  ctx.lineTo(22.0 + lanternSwing * 0.3, 10.2 + broomTilt);
+  ctx.stroke();
+
   ctx.fillStyle = '#FEF08A';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.rect(18 + lanternSwing * 0.3, 10 + broomTilt, 8, 10);
+  ctx.rect(18.0 + lanternSwing * 0.3, 10.2 + broomTilt, 8.0, 9.8);
   ctx.fill();
   ctx.stroke();
 
-  // Flame inside lantern
   ctx.fillStyle = '#EA580C';
   ctx.beginPath();
-  ctx.arc(22 + lanternSwing * 0.3, 15 + broomTilt, 2.5, 0, Math.PI * 2);
+  ctx.arc(22.0 + lanternSwing * 0.3, 15.0 + broomTilt, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
 
-  // 3. Flower-Patched Nightgown (Květovaná noční košile)
-  ctx.fillStyle = '#DDD6FE'; // Light lilac nightshirt
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(-9, -4);
-  ctx.lineTo(9, -4);
-  ctx.lineTo(13, 14);
-  ctx.lineTo(-13, 14);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Small flower prints on nightgown
-  drawFolkFlower2D(ctx, -5, 2, 2.5, '#EC4899', '#FDF2F8');
-  drawFolkFlower2D(ctx, 4, 7, 2.5, '#3B82F6', '#EFF6FF');
-
-  // Striped woolen socks dangling as she rides
+  // 3. Striped Woolen Socks & Slippers (respektující klidový postoj vx === 0 vs. let vx !== 0)
+  const legKick = s.stride * 3.8;
   for (const side of [-1, 1]) {
-    const sx = side * 5;
+    const sx = side * 4.8 + (side === -1 ? legKick : -legKick);
     ctx.fillStyle = '#F1F5F9';
     ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.rect(sx - 2, 13, 4, 7);
+    ctx.rect(sx - 2.1, 12.8, 4.2, 7.2);
     ctx.fill();
     ctx.stroke();
 
     ctx.strokeStyle = '#DC2626';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(sx - 2, 15.5); ctx.lineTo(sx + 2, 15.5);
-    ctx.moveTo(sx - 2, 18.0); ctx.lineTo(sx + 2, 18.0);
+    ctx.moveTo(sx - 2.0, 15.3);
+    ctx.lineTo(sx + 2.0, 15.3);
+    ctx.moveTo(sx - 2.0, 17.8);
+    ctx.lineTo(sx + 2.0, 17.8);
+    ctx.stroke();
+
+    // Felt bedroom slipper with pompom
+    ctx.fillStyle = '#7C2D12';
+    ctx.beginPath();
+    ctx.ellipse(sx + 1.0, 20.2, 3.4, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
   }
 
-  // 4. Sleepy Shrewd Face with Yawning / Smirking Mouth
+  // 4. 3-Tier Gouache Flower-Patched Nightgown (Květovaná a záplatovaná noční košile)
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#DDD6FE';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-9.2, -4.2);
+  ctx.lineTo(9.2, -4.2);
+  ctx.lineTo(13.2, 14.0);
+  ctx.lineTo(-13.2, 14.0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Nightgown shadow & highlight
+  ctx.fillStyle = '#C4B5FD';
+  ctx.fillRect(-11.5, 10.2, 23.0, 3.0);
+  ctx.fillStyle = '#EDE9FE';
+  ctx.fillRect(-6.5, -2.5, 5.5, 8.0);
+
+  // Cross-stitched patch & folk flowers on nightgown
+  ctx.fillStyle = '#FDE047';
+  ctx.strokeStyle = HOSPODA_INK;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.rect(-8.5, 6.2, 4.5, 3.6);
+  ctx.fill();
+  ctx.stroke();
+
+  drawFolkFlower2D(ctx, -4.5, 1.5, 2.5, '#EC4899', '#FDF2F8');
+  drawFolkFlower2D(ctx, 4.5, 7.0, 2.5, '#3B82F6', '#EFF6FF');
+
+  // 5. Left & Right 2-Jointed Articulated Arms & 4-Fingered Hands Gripping Broomstick & Pillow
+  const lShoulderX = -7.8;
+  const lShoulderY = -2.2;
+  const lElbowX = -11.5;
+  const lElbowY = 1.2 + broomTilt * 0.4;
+  const lWristX = -9.5;
+  const lWristY = 4.2 + broomTilt;
+
+  drawArticulatedArm2D(
+    ctx,
+    lShoulderX,
+    lShoulderY,
+    lElbowX,
+    lElbowY,
+    lWristX,
+    lWristY,
+    4.4,
+    3.6,
+    '#DDD6FE',
+    '#C4B5FD',
+    '#EDE9FE',
+    '#EC4899'
+  );
+  drawGrippingHand2D(ctx, lWristX, lWristY, 1.3, '#FBCFE8', '#F472B6', 2.6);
+
+  // 6. Sleepy Shrewd Face with Multi-Layered Expressive Drowsy Eyes & Yawning Mouth
   ctx.fillStyle = '#FBCFE8';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.arc(0, -12, 9.5, 0, Math.PI * 2);
+  ctx.arc(0, -12.2, 9.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Disheveled grey hair sticking out
+  // Disheveled grey hair strands sticking out
   ctx.strokeStyle = '#94A3B8';
   ctx.lineWidth = 2.0;
   for (let i = 0; i < 5; i++) {
     ctx.beginPath();
-    ctx.moveTo(-8 + i * 4, -18);
-    ctx.lineTo(-11 + i * 5, -24 + Math.sin(time * 5 + i) * 2);
+    ctx.moveTo(-8.0 + i * 4.0, -18.0);
+    ctx.lineTo(-10.5 + i * 4.8, -23.5 + Math.sin(time * 4 + i) * 1.5);
     ctx.stroke();
   }
+
+  // Sleepy half-closed Lada expressive eyes (snapping wide open during strike/enraged!)
+  const pupilX = s.isStrike ? 0.9 : 0.35;
+  const eyeSquint = s.isStrike || s.isEnraged ? 0.08 : 0.42;
+  const browTilt = s.isStrike || s.isEnraged ? 1.5 : -0.6;
+
+  drawLadaExpressiveEye2D(
+    ctx,
+    -3.8,
+    -14.0,
+    2.7,
+    2.4,
+    '#FFFFFF',
+    s.isEnraged ? '#DC2626' : '#4338CA',
+    pupilX,
+    0,
+    eyeSquint,
+    '#64748B',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    3.8,
+    -14.0,
+    2.7,
+    2.4,
+    '#FFFFFF',
+    s.isEnraged ? '#DC2626' : '#4338CA',
+    pupilX,
+    0,
+    eyeSquint,
+    '#64748B',
+    -browTilt,
+    0
+  );
 
   // Hooked nose with freckles
   ctx.fillStyle = '#F472B6';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(1, -11, 2.8, 0, Math.PI * 2);
+  ctx.arc(1.0, -11.0, 2.7, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
-  // Sleepy squinting eyes (ospalá mhouřící víčka)
-  for (const side of [-1, 1]) {
-    const ex = side * 3.8;
-    const ey = -14;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 2.8, 1.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#4338CA';
-    ctx.beginPath();
-    ctx.arc(ex + 0.4, ey, 1.0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Heavy drowsy eyelids
-    ctx.fillStyle = '#F472B6';
-    ctx.beginPath();
-    ctx.ellipse(ex, ey - 0.8, 3.0, 1.4, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.stroke();
-  }
 
   // Yawning open mouth with pink tongue
   ctx.fillStyle = '#831843';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.ellipse(1, -7.5, 3.5, 3.0, 0, 0, Math.PI * 2);
+  ctx.ellipse(1.0, -7.4, 3.4, 2.8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = '#F43F5E';
   ctx.beginPath();
-  ctx.arc(1, -6.5, 2.0, 0, Math.PI);
+  ctx.arc(1.0, -6.5, 1.9, 0, Math.PI);
   ctx.fill();
 
-  // 5. Polka-dot Nightcap with Pompom (Noční čepec s bambulí)
+  // 7. Polka-dot Nightcap with Pompom (Noční čepec s bambulí)
+  const capWave = (s.isMoving ? s.stride * 2.5 : 0) + Math.sin(time * 5.0) * 2.0;
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
-  const capWave = Math.sin(time * 7) * 4;
   ctx.beginPath();
-  ctx.moveTo(-10, -16);
-  ctx.quadraticCurveTo(-6, -28, 4, -30);
-  ctx.quadraticCurveTo(14, -26 + capWave, 16, -18 + capWave);
-  ctx.lineTo(8, -17);
+  ctx.moveTo(-10.0, -16.0);
+  ctx.quadraticCurveTo(-6.0, -28.0, 4.0, -30.0);
+  ctx.quadraticCurveTo(14.0, -26.0 + capWave, 16.0, -18.0 + capWave);
+  ctx.lineTo(8.0, -17.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // White pompom on cap tip
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.arc(16, -18 + capWave, 3.2, 0, Math.PI * 2);
+  ctx.arc(-2.0, -22.0, 1.1, 0, Math.PI * 2);
+  ctx.arc(4.0, -25.0, 1.1, 0, Math.PI * 2);
+  ctx.arc(16.0, -18.0 + capWave, 3.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+
+  if (s.isEnraged || s.isStrike) {
+    drawFuriantSteamPuffs(ctx, 0, -29.0, time, 1);
+  }
+
+  // Right 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Front of Broomstick
+  const rShoulderX = 7.8;
+  const rShoulderY = -2.0;
+  const rElbowX = s.isStrike ? 13.5 : 11.2;
+  const rElbowY = 0.8 + broomTilt * 0.5;
+  const rWristX = s.isStrike ? 15.5 : 12.5;
+  const rWristY = 3.8 + broomTilt;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    4.4,
+    3.6,
+    '#DDD6FE',
+    '#C4B5FD',
+    '#EDE9FE',
+    '#EC4899'
+  );
+  drawGrippingHand2D(ctx, rWristX, rWristY, 1.4, '#FBCFE8', '#F472B6', 2.7);
 
   ctx.restore();
 }
@@ -2032,6 +2794,10 @@ export function drawHospodaLedoviMuzi(
 
   if (s.isPanicked) {
     ctx.rotate(0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.07 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.12 * s.strikeProgress);
   }
 
   // 1. Vast Freezing Aura Shadow
@@ -2042,39 +2808,72 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.restore();
 
-  // 2. Heavy Sheepskin Coats & Boots (Trojitý mohutný kožich)
-  ctx.fillStyle = '#0369A1';
+  // 2. Four Heavy Studded Boots (respektující klidový postoj vx === 0 vs. chůzi vx !== 0)
+  const bootStride = s.stride * 4.2;
+  const bootOffsets: Array<[number, number]> = [
+    [-16, bootStride],
+    [-6, -bootStride],
+    [6, bootStride],
+    [16, -bootStride],
+  ];
+  for (const [bx, shift] of bootOffsets) {
+    ctx.fillStyle = '#0F172A';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.rect(bx - 3.2 + shift, 18.5, 6.4, 5.2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 3. Left 2-Jointed Articulated Coat Arm & 4-Fingered Hand (Servác's Arm)
+  const armSway = s.isMoving ? s.stride * 3.2 : Math.sin(time * 2.4) * 0.7;
+  drawArticulatedArm2D(
+    ctx,
+    -20.5,
+    -3.5,
+    -25.5,
+    1.5 + armSway * 0.5,
+    -27.5,
+    6.5 + armSway,
+    5.4,
+    4.5,
+    '#0369A1',
+    '#0C4A6E',
+    '#0284C7',
+    '#F0F9FF'
+  );
+  drawGrippingHand2D(ctx, -27.5, 6.5 + armSway, 0.4, '#38BDF8', '#0284C7', 3.0);
+
+  // 4. Heavy 3-Tier Sheepskin Coat (Trojitý mohutný kožich s beránčím lemem a záplatou)
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#0369A1';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.6;
-
-  // Broad joint body
   ctx.beginPath();
-  ctx.moveTo(-22, -6);
-  ctx.lineTo(22, -6);
-  ctx.lineTo(24, 18);
-  ctx.lineTo(-24, 18);
+  ctx.moveTo(-22.0, -6.0);
+  ctx.lineTo(22.0, -6.0);
+  ctx.lineTo(24.0, 18.5);
+  ctx.lineTo(-24.0, 18.5);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // White wool lining on coat borders
+  // Coat shadow & highlight
+  ctx.fillStyle = '#0C4A6E';
+  ctx.fillRect(-22.0, 12.5, 44.0, 4.5);
+  ctx.fillStyle = '#0284C7';
+  ctx.fillRect(-16.0, -4.0, 12.0, 10.0);
+
+  // White wool lining on coat bottom
   ctx.fillStyle = '#F0F9FF';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
   for (const bx of [-16, 0, 16]) {
     ctx.beginPath();
-    ctx.ellipse(bx, 17, 7, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(bx, 17.5, 7.2, 3.0, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
-
-  // 3 Heavy studded boots
-  ctx.fillStyle = '#0F172A';
-  for (const bx of [-16, -6, 6, 16]) {
-    ctx.fillRect(bx - 3, 20, 6, 4);
-  }
-
-  // 3. Three Distinct Folk Frost Brothers:
 
   // --- LEFT BROTHER: SERVÁC (Vzteklý v beranici) ---
   ctx.save();
@@ -2087,7 +2886,6 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Brown sheepskin ushanka/beranice
   ctx.fillStyle = '#78350F';
   ctx.beginPath();
   ctx.arc(0, -5, 9, Math.PI, 0);
@@ -2095,32 +2893,14 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Flappy earflaps
-  ctx.fillRect(-10, -3, 4, 8);
-  ctx.fillRect(6, -3, 4, 8);
+  drawLadaExpressiveEye2D(ctx, -2.6, 0.5, 2.1, 2.1, '#FFFFFF', '#0369A1', 0.4, 0, 0.15, '#FFFFFF', 1.4, 0);
+  drawLadaExpressiveEye2D(ctx, 2.6, 0.5, 2.1, 2.1, '#FFFFFF', '#0369A1', 0.4, 0, 0.15, '#FFFFFF', -1.4, 0);
 
-  // Angry eyes & V-brow
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  ctx.moveTo(-5, -3); ctx.lineTo(-1, -1); ctx.lineTo(3, -3);
-  ctx.stroke();
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(-2.5, 1, 2.0, 0, Math.PI * 2);
-  ctx.arc(2.5, 1, 2.0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#0F172A';
-  ctx.beginPath();
-  ctx.arc(-2.5, 1, 1.0, 0, Math.PI * 2);
-  ctx.arc(2.5, 1, 1.0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Icicle beard
   ctx.fillStyle = '#E0F2FE';
   ctx.beginPath();
-  ctx.moveTo(-6, 5); ctx.lineTo(6, 5); ctx.lineTo(0, 14);
+  ctx.moveTo(-6, 5);
+  ctx.lineTo(6, 5);
+  ctx.lineTo(0, 14);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -2137,7 +2917,6 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Blue pointed nightcap with icicle
   ctx.fillStyle = '#1D4ED8';
   ctx.beginPath();
   ctx.moveTo(-8, -4);
@@ -2147,31 +2926,24 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Cheerful eyes
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(-2.5, 1, 2.0, 0, Math.PI * 2);
-  ctx.arc(2.5, 1, 2.0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#0F172A';
-  ctx.beginPath();
-  ctx.arc(-2.5, 1, 1.0, 0, Math.PI * 2);
-  ctx.arc(2.5, 1, 1.0, 0, Math.PI * 2);
-  ctx.fill();
+  drawLadaExpressiveEye2D(ctx, -2.6, 0.5, 2.1, 2.1, '#FFFFFF', '#1D4ED8', 0.4, 0, 0.05, '#FFFFFF', -0.6, 0);
+  drawLadaExpressiveEye2D(ctx, 2.6, 0.5, 2.1, 2.1, '#FFFFFF', '#1D4ED8', 0.4, 0, 0.05, '#FFFFFF', 0.6, 0);
 
-  // Clay pipe puffing smoke (Hliněná dýmka)
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(3, 4); ctx.lineTo(9, 7); ctx.lineTo(12, 3);
+  ctx.moveTo(3, 4);
+  ctx.lineTo(9, 7);
+  ctx.lineTo(12, 3);
   ctx.stroke();
 
   drawFlatGouacheSmokeLobe(ctx, 13, 0, 3.5);
 
-  // Icicle beard
   ctx.fillStyle = '#E0F2FE';
   ctx.beginPath();
-  ctx.moveTo(-6, 5); ctx.lineTo(6, 5); ctx.lineTo(2, 14);
+  ctx.moveTo(-6, 5);
+  ctx.lineTo(6, 5);
+  ctx.lineTo(2, 14);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -2188,7 +2960,6 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Majestic Icicle Crown (Rampouchová koruna)
   ctx.fillStyle = '#E0F2FE';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
@@ -2204,36 +2975,9 @@ export function drawHospodaLedoviMuzi(
   ctx.fill();
   ctx.stroke();
 
-  // Thick frost eyebrows
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2.6;
-  ctx.beginPath();
-  ctx.moveTo(-7, -4); ctx.lineTo(0, -2); ctx.lineTo(7, -4);
-  ctx.stroke();
+  drawLadaExpressiveEye2D(ctx, -4.0, -0.5, 2.6, 2.6, '#FFFFFF', '#0369A1', 0.5, 0, 0.15, '#FFFFFF', 1.5, 0);
+  drawLadaExpressiveEye2D(ctx, 4.0, -0.5, 2.6, 2.6, '#FFFFFF', '#0369A1', 0.5, 0, 0.15, '#FFFFFF', -1.5, 0);
 
-  // Fierce eyes with catchlight
-  for (const side of [-1, 1]) {
-    const ex = side * 4;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.arc(ex, 0, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#0369A1';
-    ctx.beginPath();
-    ctx.arc(ex, 0, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(ex + 0.6, -0.6, 0.7, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Mighty Icicle Beard reaching down chest
   ctx.fillStyle = '#F0F9FF';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
@@ -2248,32 +2992,68 @@ export function drawHospodaLedoviMuzi(
   ctx.stroke();
   ctx.restore();
 
-  // 4. Frost Sceptre & Ice Pitchfork in Hands
-  const weaponLift = s.isStrike ? 8 : -4;
-  ctx.strokeStyle = '#E0F2FE';
-  ctx.lineWidth = 2.8;
-  ctx.beginPath();
-  ctx.moveTo(24, 6);
-  ctx.lineTo(26, -22 + weaponLift);
-  ctx.stroke();
+  // 5. Right 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Ice Pitchfork
+  const rShoulderX = 20.5;
+  const rShoulderY = -3.0;
+  const rElbowX = s.isWindup ? 22.0 - s.windupProgress * 2.5 : s.isStrike ? 25.0 + s.strikeProgress * 3.0 : 23.8;
+  const rElbowY = s.isWindup ? 0.5 - s.windupProgress * 3.0 : s.isStrike ? -0.5 + s.strikeProgress * 1.5 : 1.5 - armSway * 0.4;
+  const rWristX = s.isWindup ? 23.5 - s.windupProgress * 3.0 : s.isStrike ? 28.5 + s.strikeProgress * 4.5 : 26.2;
+  const rWristY = s.isWindup ? -4.5 - s.windupProgress * 4.5 : s.isStrike ? -1.0 + s.strikeProgress * 3.5 : 0.5 - armSway * 0.7;
 
-  // 3-prong pitchfork head
-  ctx.fillStyle = '#38BDF8';
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    5.4,
+    4.5,
+    '#0369A1',
+    '#0C4A6E',
+    '#0284C7',
+    '#F0F9FF'
+  );
+
+  const forkAngle = s.isWindup
+    ? -0.45 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.4 + s.strikeProgress * 0.55
+    : -0.1;
+
+  ctx.save();
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(forkAngle);
+
+  ctx.fillStyle = '#E0F2FE';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
-  for (const px of [-3, 0, 3]) {
+  ctx.beginPath();
+  ctx.rect(-1.4, -22.0, 2.8, 30.0);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#38BDF8';
+  for (const px of [-3.5, 0, 3.5]) {
     ctx.beginPath();
-    ctx.moveTo(26 + px, -22 + weaponLift);
-    ctx.lineTo(26 + px, -32 + weaponLift);
+    ctx.moveTo(px - 1.0, -21.5);
+    ctx.lineTo(px + 1.0, -21.5);
+    ctx.lineTo(px, -32.0);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
   }
+  ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, forkAngle, '#38BDF8', '#0284C7', 3.1);
 
   ctx.restore();
 }
 
 // ---------------------------------------------------------------------------
 // 10. ZBOJNÍK Z HAMRŮ (Zbojník, L5 Mini-boss)
-// Archetyp: Furiantský a bodrý horský zbojník s valaškou, opaskem a knírem
+// Archetyp: Furiantský a bodrý horský zbojník s valaškou v pěsti, opaskem a knírem
 // ---------------------------------------------------------------------------
 export function drawHospodaZbojnik(
   ctx: CanvasRenderingContext2D,
@@ -2294,6 +3074,10 @@ export function drawHospodaZbojnik(
 
   if (s.isPanicked) {
     ctx.rotate(0.08);
+  } else if (s.isWindup) {
+    ctx.rotate(-0.08 * s.windupProgress);
+  } else if (s.isStrike) {
+    ctx.rotate(0.13 * s.strikeProgress);
   }
 
   // 1. Forest Shadow
@@ -2304,158 +3088,169 @@ export function drawHospodaZbojnik(
   ctx.fill();
   ctx.restore();
 
-  // 2. Leather Krpce (Tradiční zbojnické krpce ovázané řemínky)
-  ctx.fillStyle = '#78350F';
-  ctx.strokeStyle = HOSPODA_INK;
-  ctx.lineWidth = 2.0;
-
-  const legSwing = Math.sin(time * 9) * 4;
+  // 2. Leather Krpce & Woolen Trousers (respektující klidový postoj vx === 0 vs. chůzi vx !== 0)
+  const legSwing = s.stride * 4.5;
   for (const side of [-1, 1]) {
-    const lx = side * 7 + (side === -1 ? legSwing : -legSwing);
-    // White woolen trousers (soukenné nohavice)
+    const lx = side * 6.8 + (side === -1 ? legSwing : -legSwing);
     ctx.fillStyle = '#F8FAFC';
+    ctx.strokeStyle = HOSPODA_INK;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.moveTo(lx - 4, 8);
-    ctx.lineTo(lx - 4, 20);
-    ctx.lineTo(lx + 4, 20);
-    ctx.lineTo(lx + 4, 8);
+    ctx.moveTo(lx - 3.8, 8.0);
+    ctx.lineTo(lx - 4.0, 19.5);
+    ctx.lineTo(lx + 4.0, 19.5);
+    ctx.lineTo(lx + 3.8, 8.0);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Red braided wool cord on pants
     ctx.strokeStyle = '#DC2626';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(lx, 8); ctx.lineTo(lx, 19);
+    ctx.moveTo(lx, 8.5);
+    ctx.lineTo(lx, 19.0);
     ctx.stroke();
 
     // Krpce moccasins
     ctx.fillStyle = '#92400E';
     ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.moveTo(lx - 5, 19);
-    ctx.lineTo(lx + 6, 19);
-    ctx.lineTo(lx + 5, 23);
-    ctx.lineTo(lx - 6, 23);
+    ctx.moveTo(lx - 5.0, 19.0);
+    ctx.lineTo(lx + 6.0, 19.0);
+    ctx.lineTo(lx + 5.0, 23.0);
+    ctx.lineTo(lx - 6.0, 23.0);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
   }
 
-  // 3. Embroidered White Shirt & Red Folkish Vest (Lidová vyšívaná vestička)
-  ctx.fillStyle = '#FAF5FF';
+  // 3. Left 2-Jointed Articulated Linen-Sleeved Arm & 4-Fingered Fist on Hip
+  const armSway = s.isMoving ? s.stride * 3.2 : Math.sin(time * 2.5) * 0.7;
+  drawArticulatedArm2D(
+    ctx,
+    -11.0,
+    -3.5,
+    -16.2,
+    0.5 + armSway * 0.4,
+    -13.5,
+    5.5 + armSway * 0.6,
+    5.0,
+    4.2,
+    '#FAF5FF',
+    '#E2E8F0',
+    '#FFFFFF',
+    '#DC2626'
+  );
+  drawGrippingHand2D(ctx, -13.5, 5.5 + armSway * 0.6, 0.8, '#F5C6A5', '#D9A07A', 2.8);
+
+  // 4. Embroidered White Shirt, Red Folkish Vest & 3-Buckle Zbojník Belt
+  ctx.fillStyle = s.isHurt ? '#FCA5A5' : '#FAF5FF';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.ellipse(0, 0, 13, 10, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 13.0, 10.0, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Red vest (lajblík) with brass buttons
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-11, -6);
-  ctx.lineTo(11, -6);
-  ctx.lineTo(12, 6);
-  ctx.lineTo(4, 5);
-  ctx.lineTo(0, 7);
-  ctx.lineTo(-4, 5);
-  ctx.lineTo(-12, 6);
+  ctx.moveTo(-11.0, -6.0);
+  ctx.lineTo(11.0, -6.0);
+  ctx.lineTo(12.0, 6.0);
+  ctx.lineTo(4.0, 5.0);
+  ctx.lineTo(0, 7.0);
+  ctx.lineTo(-4.0, 5.0);
+  ctx.lineTo(-12.0, 6.0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Brass buttons
   ctx.fillStyle = '#F59E0B';
   for (const by of [-3, 0, 3]) {
     ctx.beginPath();
-    ctx.arc(-2, by, 1.2, 0, Math.PI * 2);
-    ctx.arc(2, by, 1.2, 0, Math.PI * 2);
+    ctx.arc(-2.2, by, 1.2, 0, Math.PI * 2);
+    ctx.arc(2.2, by, 1.2, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Broad Zbojník Leather Belt with 3 Big Brass Buckles (Zbojnický opasek se 3 přezkami)
   ctx.fillStyle = '#451A03';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.rect(-12, 5, 24, 7);
+  ctx.rect(-12.0, 5.0, 24.0, 7.0);
   ctx.fill();
   ctx.stroke();
 
-  // 3 Brass buckles
   ctx.fillStyle = '#FBBF24';
-  ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.4;
   for (const bx of [-7, 0, 7]) {
     ctx.beginPath();
-    ctx.rect(bx - 2.5, 6, 5, 5);
+    ctx.rect(bx - 2.5, 6.0, 5.0, 5.0);
     ctx.fill();
     ctx.stroke();
   }
 
-  // 4. Expressive Handsome Face with Mighty Black Moustache & Rosy Cheeks
+  // 5. Expressive Handsome Face with Multi-Layered Eyes & Mighty Black Moustache
   ctx.fillStyle = '#F5C6A5';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.arc(0, -12, 9.5, 0, Math.PI * 2);
+  ctx.arc(0, -12.0, 9.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Rosy cheeks
   ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
   ctx.beginPath();
   ctx.arc(-5.5, -10.5, 2.5, 0, Math.PI * 2);
   ctx.arc(5.5, -10.5, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
-  // Prominent Ladovský straight nose
+  const pupilX = s.isStrike ? 0.95 : s.isWindup ? -0.4 : 0.45;
+  const eyeSquint = s.isAttacking || s.isEnraged ? 0.2 : 0.05;
+  const browTilt = s.isAttacking || s.isEnraged ? 1.5 : 0.6;
+
+  drawLadaExpressiveEye2D(
+    ctx,
+    -3.8,
+    -14.5,
+    2.7,
+    2.6,
+    '#FFFFFF',
+    s.isEnraged ? '#DC2626' : '#451A03',
+    pupilX,
+    0,
+    eyeSquint,
+    '#1C1917',
+    browTilt,
+    0
+  );
+  drawLadaExpressiveEye2D(
+    ctx,
+    3.8,
+    -14.5,
+    2.7,
+    2.6,
+    '#FFFFFF',
+    s.isEnraged ? '#DC2626' : '#451A03',
+    pupilX,
+    0,
+    eyeSquint,
+    '#1C1917',
+    -browTilt,
+    0
+  );
+
   ctx.fillStyle = '#E59B7D';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.arc(0, -12, 2.4, 0, Math.PI * 2);
+  ctx.arc(0, -12.0, 2.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Bold eyes with white sclera and dark irises
-  for (const side of [-1, 1]) {
-    const ex = side * 3.8;
-    const ey = -14.5;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.strokeStyle = HOSPODA_INK;
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 2.8, 2.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#1C1917';
-    ctx.beginPath();
-    ctx.arc(ex + (s.isAttacking ? side * 0.7 : 0.4), ey, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Catchlight
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(ex + 0.8, ey - 0.9, 0.7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Bold arched black eyebrow
-    ctx.strokeStyle = '#1C1917';
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    ctx.moveTo(ex - 2.8, ey - 3.8);
-    ctx.quadraticCurveTo(ex, ey - 5.0, ex + 2.8, ey - 3.8);
-    ctx.stroke();
-  }
-
-  // Famous curling black zbojník moustache! (Kroucený černý knír)
   ctx.fillStyle = '#1C1917';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 1.8;
@@ -2469,86 +3264,109 @@ export function drawHospodaZbojnik(
   ctx.fill();
   ctx.stroke();
 
-  // White teeth showing in broad furiant grin
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.arc(0, -7.0, 3.2, 0.2, Math.PI - 0.2);
   ctx.fill();
 
-  // 5. Broad Felt Hat with Peacock Feather & Red Ribbons (Širák s pavím perem)
+  // 6. Broad Felt Hat with Peacock Feather & Red Ribbon
   ctx.fillStyle = '#1C1917';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.4;
-
-  // Wide brim
   ctx.beginPath();
-  ctx.ellipse(0, -19, 17, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -19.0, 17.0, 4.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Round crown
   ctx.beginPath();
-  ctx.arc(0, -21, 9, Math.PI, 0);
+  ctx.arc(0, -21.0, 9.0, Math.PI, 0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Red hat ribbon
   ctx.fillStyle = '#DC2626';
   ctx.beginPath();
-  ctx.rect(-8.5, -22, 17, 2.5);
+  ctx.rect(-8.5, -22.0, 17.0, 2.5);
   ctx.fill();
   ctx.stroke();
 
-  // Peacock feather sticking out with blue-green eye
   ctx.strokeStyle = '#059669';
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.moveTo(5, -22);
-  ctx.quadraticCurveTo(14, -28, 18, -36);
+  ctx.moveTo(5.0, -22.0);
+  ctx.quadraticCurveTo(14.0, -28.0, 18.0, -36.0);
   ctx.stroke();
 
-  // Peacock eye
   ctx.fillStyle = '#0284C7';
   ctx.beginPath();
-  ctx.ellipse(18, -36, 3.5, 2.5, 0.4, 0, Math.PI * 2);
+  ctx.ellipse(18.0, -36.0, 3.5, 2.5, 0.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.fillStyle = '#F59E0B';
   ctx.beginPath();
-  ctx.arc(18, -36, 1.2, 0, Math.PI * 2);
+  ctx.arc(18.0, -36.0, 1.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // 6. Shepherd's Axe / Valaška in Strong Hand (Ostrá valaška)
-  const valaskaTilt = s.isWindup ? -0.8 : s.isStrike ? 0.6 : 0.1;
+  // 7. Right 2-Jointed Articulated Arm & 4-Fingered Hand Gripping Shepherd's Axe (Valaška)
+  const rShoulderX = 11.0;
+  const rShoulderY = -3.0;
+  const rElbowX = s.isWindup ? 12.5 - s.windupProgress * 2.5 : s.isStrike ? 16.0 + s.strikeProgress * 3.0 : 14.5;
+  const rElbowY = s.isWindup ? -0.5 - s.windupProgress * 3.5 : s.isStrike ? 0.5 + s.strikeProgress * 1.5 : 1.5 - armSway * 0.4;
+  const rWristX = s.isWindup ? 14.0 - s.windupProgress * 3.5 : s.isStrike ? 20.5 + s.strikeProgress * 5.0 : 17.5;
+  const rWristY = s.isWindup ? -5.5 - s.windupProgress * 5.0 : s.isStrike ? -1.0 + s.strikeProgress * 4.0 : -0.5 - armSway * 0.7;
+
+  drawArticulatedArm2D(
+    ctx,
+    rShoulderX,
+    rShoulderY,
+    rElbowX,
+    rElbowY,
+    rWristX,
+    rWristY,
+    5.0,
+    4.2,
+    '#FAF5FF',
+    '#E2E8F0',
+    '#FFFFFF',
+    '#DC2626'
+  );
+
+  const valaskaAngle = s.isWindup
+    ? -0.55 - s.windupProgress * 0.45
+    : s.isStrike
+    ? 0.45 + s.strikeProgress * 0.65
+    : 0.08;
+
   ctx.save();
-  ctx.translate(12, 2);
-  ctx.rotate(valaskaTilt);
+  ctx.translate(rWristX, rWristY);
+  ctx.rotate(valaskaAngle);
 
-  // Ash wood shaft
-  ctx.strokeStyle = '#78350F';
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(0, 18);
-  ctx.lineTo(0, -26);
-  ctx.stroke();
-
-  // Steel axe blade with spike
-  ctx.fillStyle = '#CBD5E1';
+  // Ash wood shaft passing directly through Zbojník's hand at (0, 0)
+  ctx.fillStyle = '#78350F';
   ctx.strokeStyle = HOSPODA_INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
-  ctx.moveTo(-1, -26);
-  ctx.lineTo(10, -26);
-  ctx.quadraticCurveTo(12, -21, 9, -16);
-  ctx.lineTo(-1, -18);
-  ctx.lineTo(-6, -21); // back spike
-  ctx.closePath();
+  ctx.rect(-1.4, -24.0, 2.8, 34.0);
   ctx.fill();
   ctx.stroke();
 
+  // Steel axe blade with back spike
+  ctx.fillStyle = '#CBD5E1';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(-1.0, -24.0);
+  ctx.lineTo(10.5, -24.0);
+  ctx.quadraticCurveTo(12.5, -19.0, 9.5, -14.0);
+  ctx.lineTo(-1.0, -16.0);
+  ctx.lineTo(-6.5, -19.0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
+
+  drawGrippingHand2D(ctx, rWristX, rWristY, valaskaAngle, '#F5C6A5', '#D9A07A', 2.9);
 
   ctx.restore();
 }
+

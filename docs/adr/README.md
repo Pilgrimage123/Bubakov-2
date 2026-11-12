@@ -59,7 +59,5 @@ This directory records architectural decisions made for the project Bubákov.
 | [0052](0052-zakleta-princezna-nocni-odkleti-a-kralovske-veno.md) | Zakletá princezna, Hřbitovní plot se svícemi a Královské věno |
 | [0053](0053-kinematika-vizual-a-animovane-stavy-certova-dedecka.md) | Kinematika, vizuální kodex a animované stavy Čertova dědečka s nůší |
 | [0054](0054-hospodsky-figuralni-kanon-bossu.md) | Hospodský figurální kánon a trojjediná povaha bossů |
-
-
-
-
+| [0055](0055-parita-ukazkovych-bossu-s-hospodskym-kanonem.md) | Parita 6 ukázkových bossů s hospodským kánonem a mobilní bojový postoj |
+| [0056](0056-trojice-vzacnych-bossu-bubacke-diry.md) | Trojice vzácných bossů Bubácké díry, sezónní hierarchie a legendární artefakty |

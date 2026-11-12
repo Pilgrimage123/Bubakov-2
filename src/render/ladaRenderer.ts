@@ -6998,8 +6998,8 @@ var Lada = {
 	drawKlekanice(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false, attackInfo?: any, enemy?: any) {
 		drawHospodaKlekanice(ctx, x, y, time, vx, panicked, attackInfo, enemy);
 	},
-	drawCert(ctx, x, y, time, vx, panicked, isBoss = false, isCharging = false, attackInfo?: EnemyAttackInfo) {
-		drawHospodaCert(ctx, x, y, time, vx, panicked, isBoss, isCharging, attackInfo);
+	drawCert(ctx, x, y, time, vx, panicked, isBoss = false, isCharging = false, attackInfo?: EnemyAttackInfo, enemy?: any) {
+		drawHospodaCert(ctx, x, y, time, vx, panicked, isBoss, isCharging, attackInfo, enemy);
 	},
 	drawHejkal(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo, enemy?: any) {
 		drawHospodaHejkal(ctx, x, y, time, vx, panicked, attackInfo, enemy);
@@ -21821,61 +21821,8 @@ function drawOverlayVfx(
   const enemyId = enemy?.id || '';
   const method = enemy?.method || '';
 
-  // Obr: Pine tree trunk (borovice)
-  if (enemyId === 'obr' || method === 'drawObr') {
-    ctx.save();
-    ctx.translate(charX, charY);
-    ctx.scale(facingDir, 1);
-    if (k.phase === 1 || k.phase === 2 || k.phase === 3) {
-      ctx.save();
-      ctx.rotate(-0.45);
-      Lada.setupPath(ctx, '#5E3A21', COLORS.ink, 3.5);
-      ctx.beginPath();
-      ctx.moveTo(-6, -26);
-      ctx.lineTo(-4, -76);
-      ctx.lineTo(4, -74);
-      ctx.lineTo(6, -28);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = '#3D2210';
-      ctx.lineWidth = 2.0;
-      ctx.beginPath();
-      ctx.moveTo(-3, -34);
-      ctx.lineTo(-2, -72);
-      ctx.moveTo(2, -32);
-      ctx.lineTo(3, -70);
-      ctx.stroke();
-
-      Lada.setupPath(ctx, '#233E2B', COLORS.ink, 2.5);
-      ctx.beginPath();
-      ctx.moveTo(-14, -76);
-      ctx.lineTo(0, -96);
-      ctx.lineTo(15, -74);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    } else if (k.phase === 4 || k.phase === 5) {
-      ctx.save();
-      ctx.rotate(0.35);
-      Lada.setupPath(ctx, '#5E3A21', COLORS.ink, 3.5);
-      ctx.beginPath();
-      ctx.moveTo(10, -10);
-      ctx.lineTo(44, 26);
-      ctx.lineTo(34, 34);
-      ctx.lineTo(2, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-    ctx.restore();
-  }
-
   // Dřevorubec & Zbojník: Two-handed axe
-  else if (
+  if (
     enemyId === 'drevorubec' ||
     enemyId === 'zbojnik' ||
     enemyId === 'obrneny_zbojnik' ||
@@ -21980,11 +21927,9 @@ function drawOverlayVfx(
     ctx.restore();
   }
 
-  // Čert & Čertík: Wrought pitchfork
+  // Čertík: Wrought pitchfork
   else if (
-    enemyId === 'cert' ||
     enemyId === 'certik' ||
-    method === 'drawCert' ||
     method === 'drawCertik'
   ) {
     ctx.save();
@@ -22898,6 +22843,11 @@ function drawEnemyRenderer(
     enemy?.prefix === 'ostrileny' ||
     enemy?.prefix === 'velitel' ||
     enemy?.category === 'bosses' ||
+    method === 'drawHastrman' ||
+    method === 'drawRusalka' ||
+    method === 'drawKoledujiciBubak' ||
+    method === 'drawObr' ||
+    method === 'drawCert' ||
     method === 'drawCertovaBabicka' ||
     method === 'drawZakletaPrincezna' ||
     method === 'drawBarbucha' ||
@@ -23165,17 +23115,17 @@ function drawEnemyRenderer(
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isCharging, attackInfo);
     } else if (method === 'drawBezhlavyRytir') {
       const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged);
-      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, attackInfo);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, attackInfo, enemy);
     } else if (method === 'drawMlynar') {
       const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged || (enemy?.hp && enemy?.maxHp && enemy.hp <= enemy.maxHp * 0.5));
-      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, attackInfo);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, attackInfo, enemy);
     } else if (method === 'drawCert') {
       const isBoss = Boolean(enemy?.isBoss || enemy?.category === 'bosses' || enemy?.id === 'cert');
       const isCharging = Boolean(enemy?.aiState === 'charge' || enemy?.isCharging);
-      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isBoss, isCharging, attackInfo);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isBoss, isCharging, attackInfo, enemy);
     } else if (method === 'drawDrak') {
       const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged);
-      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, enemy?.headAttacks, attackInfo);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, enemy?.headAttacks, attackInfo, enemy);
     } else if (method === 'drawFrostling') {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, false);
     } else {
@@ -24329,7 +24279,8 @@ function drawRusalka(
     ctx.translate(-x, -y);
   }
   const enemy = (arg7 && typeof arg7 === 'object') ? arg7 : (arg6 && typeof arg6 === 'object' && !('isActive' in arg6) ? arg6 : undefined);
-  drawHospodaRusalka(ctx, x, y, t, dir, panicked, attackInfo, enemy);
+  const effectiveVx = typeof arg4 === 'number' ? arg4 : dir;
+  drawHospodaRusalka(ctx, x, y, t, effectiveVx, panicked, attackInfo, enemy);
   ctx.restore();
 }
 

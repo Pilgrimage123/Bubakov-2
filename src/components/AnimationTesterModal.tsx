@@ -161,7 +161,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
   // Navigation
   const [activeTab, setActiveTab] = useState<TesterTab>('hunters');
   const [selectedHunterId, setSelectedHunterId] = useState<string>('wanderer');
-  const [selectedEnemyId, setSelectedEnemyId] = useState<string>('bubak');
+  const [selectedEnemyId, setSelectedEnemyId] = useState<string>('hastrman');
   const [enemyCategory, setEnemyCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -207,15 +207,54 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
   const playbackSpeedRef = useRef(playbackSpeed);
   playbackSpeedRef.current = playbackSpeed;
 
-  // Filtered enemies list
-  const enemiesList = Object.values(ENEMIES).filter((e) => {
-    const matchesCategory = enemyCategory === 'all' || e.category === enemyCategory;
-    const matchesSearch = !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.id.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Priority order for the 26 redrawn showcase bosses at the start of "Výběr strašidla"
+  const SHOWCASE_PRIORITY_IDS = [
+    'hastrman',
+    'rusalka',
+    'koledujici_bubak',
+    'obr',
+    'cert',
+    'barbucha',
+    'hejkal',
+    'mlynar',
+    'bezhlavy_rytir',
+    'drak',
+    'pan_zajic',
+    'morana',
+    'old_witch',
+    'povidlovy_cert',
+    'bakchus_s_pivnim_soudkem',
+    'umrlec_basista',
+    'blatouch',
+    'vodnicek',
+    'vrana',
+    'tajici_snehulak',
+    'mrazivy_obr',
+    'beranek',
+    'klekanice',
+    'carodejnice_zaspalka',
+    'ledovi_muzi',
+    'zbojnik',
+  ];
+
+  // Filtered enemies list with the 6 redrawn showcase bosses placed first
+  const enemiesList = Object.values(ENEMIES)
+    .filter((e) => {
+      const matchesCategory = enemyCategory === 'all' || e.category === enemyCategory;
+      const matchesSearch = !searchQuery || e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.id.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      const idxA = SHOWCASE_PRIORITY_IDS.indexOf(a.id);
+      const idxB = SHOWCASE_PRIORITY_IDS.indexOf(b.id);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return 0;
+    });
 
   const currentHunter = HUNTERS_LIST.find((h) => h.id === selectedHunterId) || HUNTERS_LIST[0];
-  const currentEnemy = ENEMIES[selectedEnemyId] || ENEMIES.bubak || Object.values(ENEMIES)[0];
+  const currentEnemy = ENEMIES[selectedEnemyId] || ENEMIES.hastrman || Object.values(ENEMIES)[0];
 
   // Draw background texture on canvas
   const drawBackground = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, bg: CanvasBg) => {
@@ -434,6 +473,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               strikeMaxTimer: recov,
               recoveryDuration: recov,
               attackAngle: attackAngleRad,
+              vx,
               mass: e.mass || 1,
             };
             if (selectedPrefix) {
