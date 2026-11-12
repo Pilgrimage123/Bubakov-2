@@ -10,54 +10,53 @@ const HUD_BOTANICAL_STYLES = `
     50% { transform: rotate(-3.2deg) translateY(-1.8px); }
   }
   @keyframes ladaHudBlossomSpin {
-    0% { transform: rotate(0deg) scale(0.94); }
-    50% { transform: rotate(180deg) scale(1.12); }
-    100% { transform: rotate(360deg) scale(0.94); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
   @keyframes ladaHudBlossomBloom {
-    0%, 100% { transform: rotate(-14deg) scale(0.92); }
-    50% { transform: rotate(16deg) scale(1.1); }
+    0%, 100% { transform: rotate(-2.5deg) scale(0.98); }
+    50% { transform: rotate(2.5deg) scale(1.02); }
   }
   @keyframes ladaHudLeafBreathe {
-    0%, 100% { transform: rotate(-5deg) scale(0.95); }
-    50% { transform: rotate(6deg) scale(1.07); }
+    0%, 100% { transform: rotate(-2deg) scale(0.98); }
+    50% { transform: rotate(2deg) scale(1.02); }
   }
   @keyframes ladaGarlandSway {
-    0%, 100% { transform: translateY(0px) rotate(-3deg); }
-    50% { transform: translateY(-2px) rotate(3deg); }
+    0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+    50% { transform: translateY(-1px) rotate(1.5deg); }
   }
   .lada-hud-vine-l {
     transform-origin: 26px 72px;
-    animation: ladaHudVineLeft 3.5s ease-in-out infinite;
+    animation: ladaHudVineLeft 5s ease-in-out infinite;
   }
   .lada-hud-vine-r {
     transform-origin: 6px 72px;
-    animation: ladaHudVineRight 3.5s ease-in-out infinite 0.45s;
+    animation: ladaHudVineRight 5s ease-in-out infinite 0.45s;
   }
   .lada-hud-blossom {
     transform-box: fill-box;
     transform-origin: center;
-    animation: ladaHudBlossomSpin 9.5s linear infinite;
+    animation: ladaHudBlossomSpin 24s linear infinite;
   }
   .lada-hud-blossom-rev {
     transform-box: fill-box;
     transform-origin: center;
-    animation: ladaHudBlossomSpin 10.5s linear infinite reverse;
+    animation: ladaHudBlossomSpin 26s linear infinite reverse;
   }
   .lada-hud-bloom {
     transform-box: fill-box;
     transform-origin: center;
-    animation: ladaHudBlossomBloom 3.2s ease-in-out infinite;
+    animation: ladaHudBlossomBloom 5.5s ease-in-out infinite;
   }
   .lada-hud-leaf {
     transform-box: fill-box;
     transform-origin: center;
-    animation: ladaHudLeafBreathe 2.7s ease-in-out infinite;
+    animation: ladaHudLeafBreathe 4.5s ease-in-out infinite;
   }
   .lada-garland-item {
     transform-box: fill-box;
     transform-origin: center;
-    animation: ladaGarlandSway 2.8s ease-in-out infinite;
+    animation: ladaGarlandSway 3.8s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {
     .lada-hud-vine-l, .lada-hud-vine-r, .lada-hud-blossom, .lada-hud-blossom-rev, .lada-hud-bloom, .lada-hud-leaf, .lada-garland-item {

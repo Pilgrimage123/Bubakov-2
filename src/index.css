@@ -850,35 +850,139 @@ body {
 
 #stats-row {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 0;
   max-height: 38px;
   flex: 0 0 auto;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  scrollbar-width: thin;
-  font-size: clamp(0.72rem, 1.35vw, 1.05rem);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-size: clamp(0.72rem, 1.25vw, 0.95rem);
   font-weight: 900;
-  color: #111111;
+  color: var(--ink);
   background: #FAF6ED;
-  border: 3.5px solid var(--ink);
+  background-image: radial-gradient(ellipse at 50% 50%, #FFFDF7 0%, #FAF6ED 100%);
+  border: 3px solid var(--ink);
   border-radius: 12px;
-  padding: 4px 12px;
+  padding: 3px 8px;
   box-sizing: border-box;
-  box-shadow: 4px 4px 0px var(--ink);
+  box-shadow: 3px 3px 0px var(--ink);
   position: relative;
+}
+
+#stats-row::-webkit-scrollbar {
+  display: none;
 }
 
 #stats-row::before {
   content: '';
   position: absolute;
-  inset: 2px;
-  border: 1px solid rgba(43, 26, 14, 0.24);
+  inset: 1.5px;
+  border: 1px solid rgba(43, 26, 14, 0.18);
   border-radius: 8px;
   pointer-events: none;
+}
+
+.hud-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 7px;
+  background: #F4ECD8;
+  border: 1.5px solid #D5B886;
+  line-height: 1.15;
+  flex-shrink: 0;
+  box-shadow: 1px 1px 0 rgba(28, 22, 16, 0.15);
+  font-weight: 900;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.hud-stat-chip:hover {
+  background: #FFF9EE;
+}
+
+.hud-stat-chip .stat-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #451A03;
+  margin-right: 1px;
+}
+
+.hud-stat-chip .stat-value {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  color: #1C1613;
+}
+
+.hud-stat-chip.chip-clock {
+  background: #F2E5C6;
+  border-color: #C8A46A;
+  gap: 6px;
+}
+.hud-stat-chip.chip-clock .stats-clock-timer {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #1C1613;
+  font-variant-numeric: tabular-nums;
+}
+.hud-stat-chip.chip-clock .stats-clock-phase {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #78350F;
+}
+
+.hud-stat-chip.chip-coins {
+  background: #FEF9C3;
+  border-color: #CA8A04;
+}
+.hud-stat-chip.chip-coins .stat-value {
+  color: #854D0E;
+}
+
+.hud-stat-chip.chip-souls {
+  background: #EFF6FF;
+  border-color: #60A5FA;
+}
+.hud-stat-chip.chip-souls .stat-value {
+  color: #1E40AF;
+}
+
+.hud-stat-chip.chip-kills {
+  background: #FEF2F2;
+  border-color: #F87171;
+}
+.hud-stat-chip.chip-kills .stat-value {
+  color: #991B1B;
+}
+
+.hud-stat-chip.chip-chest {
+  background: #FFFBEB;
+  border-color: #F59E0B;
+}
+.hud-stat-chip.chip-chest .stat-value {
+  color: #92400E;
+}
+
+.courage-critical {
+  animation: courageCriticalGlow 1.2s ease-in-out infinite alternate !important;
+}
+
+@keyframes courageCriticalGlow {
+  0% {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 4px 4px 0px var(--ink), 0 0 6px rgba(220, 38, 38, 0.4);
+    border-color: #DC2626;
+  }
+  100% {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 4px 4px 0px var(--ink), 0 0 16px rgba(220, 38, 38, 0.85);
+    border-color: #991B1B;
+  }
 }
 
 .hud-stat-divider {
@@ -1030,17 +1134,45 @@ body {
   cursor: pointer;
   user-select: none;
   z-index: 25;
-  transition: all 0.15s;
+  transition: all 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
   color: var(--parchment);
   max-width: 90vw;
   text-shadow: 1.5px 1.5px 0 var(--ink);
 }
 
-#ult-indicator:hover {
-  filter: brightness(1.15);
+#ult-indicator.ult-ready {
+  background: linear-gradient(180deg, #DC2626 0%, #B91C1C 100%) !important;
+  border-color: #FEF08A !important;
+  box-shadow: 0 0 14px rgba(253, 224, 71, 0.65), 3.5px 3.5px 0px var(--ink) !important;
+  animation: ultReadyPulse 1.8s ease-in-out infinite;
 }
 
-/* Na dotykovĂ˝ch displejĂ­ch skrĂ˝t liĹˇtu SpeciĂˇlnĂ­ schopnost â€“ staÄŤĂ­ dotykovĂ© akÄŤnĂ­ tlaÄŤĂ­tko vpravo dole */
+#ult-indicator.ult-charging {
+  background: linear-gradient(180deg, #3E2723 0%, #24140B 100%) !important;
+  opacity: 0.94;
+}
+
+@keyframes ultReadyPulse {
+  0%, 100% {
+    transform: translate(-50%, 0) scale(1.02);
+    box-shadow: 0 0 10px rgba(253, 224, 71, 0.5), 3.5px 3.5px 0px var(--ink);
+  }
+  50% {
+    transform: translate(-50%, 0) scale(1.05);
+    box-shadow: 0 0 20px rgba(253, 224, 71, 0.9), 3.5px 3.5px 0px var(--ink);
+  }
+}
+
+#ult-indicator:hover {
+  filter: brightness(1.12);
+}
+
+#ult-indicator:active {
+  transform: translate(-50%, 2px) scale(0.98) !important;
+  box-shadow: 1.5px 1.5px 0px var(--ink) !important;
+}
+
+/* Na dotykových displejích skrýt lištu Speciální schopnost – stačí dotykové akční tlačítko vpravo dole */
 @media (pointer: coarse), (hover: none) {
   #ult-indicator {
     display: none !important;
@@ -1068,6 +1200,20 @@ body {
 @media (pointer: coarse), (hover: none) {
   #hud-weapons-bar {
     bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
+    max-width: min(calc(100vw - 180px), 340px);
+  }
+}
+
+@media (max-width: 600px) {
+  #hud-weapons-bar {
+    gap: 6px;
+    padding: 3px 4px;
+  }
+  .hud-weapon-slot {
+    width: 38px;
+    height: 38px;
+    border-width: 2px;
+    border-radius: 8px;
   }
 }
 
@@ -1254,11 +1400,26 @@ body {
   box-shadow: 4px 4px 0px var(--ink);
   z-index: 25;
   pointer-events: none;
-  animation: popIn 0.3s ease-out, bossPulse 1s alternate infinite;
+  animation: warningPopIn 0.3s ease-out, bossPulse 1s alternate infinite 0.3s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+@keyframes warningPopIn {
+  0% {
+    transform: translate(-50%, 0) scale(0.6);
+    opacity: 0;
+  }
+  80% {
+    transform: translate(-50%, 0) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
 }
 
 .boss-warning-text {
@@ -2632,29 +2793,32 @@ body {
   }
 
   #stats-row {
-    max-height: 28px;
-    padding: 2px 6px;
-    gap: 6px;
+    max-height: 32px;
+    padding: 2px 4px;
+    gap: 4px;
     font-size: 0.72rem;
     border-width: 2px;
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: 2px 2px 0px var(--ink);
+    justify-content: flex-start;
   }
 
-  .stats-clock-icon {
-    font-size: 1.05rem;
+  .hud-stat-chip {
+    padding: 1px 5px;
+    gap: 3px;
+    font-size: 0.72rem;
   }
 
-  .stats-clock-timer {
-    font-size: 0.88rem;
-  }
-
-  .stats-clock-phase {
-    display: none;
-  }
-
-  #stats-row > *:nth-child(n + 4) {
+  .hud-stat-chip .stat-label {
     display: none !important;
+  }
+
+  .hud-stat-chip.chip-clock .stats-clock-phase {
+    display: none !important;
+  }
+
+  .hud-stat-chip.chip-clock .stats-clock-timer {
+    font-size: 0.85rem;
   }
 
   #boss-warning-banner {
@@ -3080,6 +3244,69 @@ body {
   display: none;
 }
 
+/* Pause modal enhanced tabbed layout */
+.pause-tab-content {
+  margin-top: 10px;
+}
+
+.pause-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+  text-align: left;
+}
+
+.pause-setting-card {
+  background: var(--panel-cream);
+  border: 2.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 3px 3px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pause-setting-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #451A03;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1.5px solid rgba(28, 22, 19, 0.15);
+  padding-bottom: 5px;
+}
+
+.pause-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#gamepad-corner-indicator {
+  position: fixed;
+  bottom: 10px;
+  right: 12px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse), (hover: none) {
+  #gamepad-corner-indicator {
+    bottom: auto !important;
+    top: max(8px, env(safe-area-inset-top, 0px)) !important;
+    right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  }
+}
+
 /* Keycap styling for controls guide */
 .keycap {
   display: inline-flex;
@@ -3303,87 +3530,6 @@ body {
 
 .basket-shaking {
   animation: grandfatherBasketShake 0.45s ease-in-out infinite;
-}
-
-/* Feature: weapon HUD slots */
-#hud-weapons-bar {
-  position: absolute;
-  bottom: max(62px, calc(58px + env(safe-area-inset-bottom, 0px)));
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  z-index: 24;
-  pointer-events: auto;
-  max-width: min(96vw, 680px);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 6px;
-  scrollbar-width: thin;
-}
-
-@media (pointer: coarse), (hover: none) {
-  #hud-weapons-bar {
-    bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
-  }
-}
-
-.hud-weapon-slot {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  background: #FAF6ED;
-  border: 2.5px solid var(--ink);
-  border-radius: 10px;
-  box-shadow: 2.5px 2.5px 0px var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.15s ease;
-  user-select: none;
-}
-
-.hud-weapon-slot:hover {
-  transform: translateY(-2px);
-  background: #FFFDF7;
-}
-
-.hud-weapon-level-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: var(--blood-red);
-  color: #FFFFFF;
-  font-size: 0.65rem;
-  font-weight: 900;
-  padding: 1px 4px;
-  border-radius: 4px;
-  border: 1.5px solid var(--ink);
-  line-height: 1;
-}
-
-.hud-weapon-milestones {
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 2px;
-}
-
-.hud-weapon-milestone-pip {
-  background: #D9A036;
-  color: #1C1610;
-  font-size: 0.6rem;
-  font-weight: 900;
-  padding: 0 3px;
-  border-radius: 3px;
-  border: 1px solid var(--ink);
-  line-height: 1.1;
-  box-shadow: 1px 1px 0 rgba(0,0,0,0.3);
 }
 
 #courage-container .bar-text {

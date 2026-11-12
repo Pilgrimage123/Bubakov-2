@@ -140,12 +140,12 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <LadaFolkFlower variant="buttercup" size={18} spin />
-            <span>Hospodská pokladna:</span> <strong style={{ color: '#78350F' }}>{meta.krejcary}</strong> krejcarů{' '}
+            <span>Hospodská pokladna:</span> <strong style={{ color: '#78350F', fontVariantNumeric: 'tabular-nums' }}>{meta.krejcary}</strong> krejcarů{' '}
             <KrejcarIcon size={18} />
             <LadaFolkFlower variant="cornflower" size={18} spin="reverse" />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <GameIcon icon="amphora" size={20} /> Osvobozeno dušiček: <strong style={{ color: '#1E40AF' }}>{meta.totalSoulsSaved || 0}</strong>
+            <GameIcon icon="amphora" size={20} /> Osvobozeno dušiček: <strong style={{ color: '#1E40AF', fontVariantNumeric: 'tabular-nums' }}>{meta.totalSoulsSaved || 0}</strong>
           </span>
         </h3>
 

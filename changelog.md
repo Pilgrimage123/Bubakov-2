@@ -1,3 +1,15 @@
+## 2026-11-12 – Učesanější a přehlednější herní UI/UX, živý arzenál a knižní pauza
+
+- **Kompletní zpřehlednění a kultivace herního UI/UX (`src/App.tsx`, `src/index.css`, `src/components/LadaHudBotanicalDecor.tsx`, `src/components/VillageView.tsx`)**:
+  - **Klidný a důstojný Ladovský HUD**: Odstraněno více než 7 současně rotujících a pulzujících květinových animací v horní liště a ukazateli kuráže, které způsobovaly únavu zraku během soubojů. Rotace byla zklidněna na jemný, pomalý oběh (24 s / 26 s) bez rozkmitu měřítka. Plné respektování accessibility pravidla `prefers-reduced-motion`.
+  - **Sjednocené statové čipy (`.hud-stat-chip`)**: Ukazatele času, perníčků, dušiček, zklidněných bubáků a truhly sjednoceny do úhledných papírových čipů s pevnou typografií a tabulkovými číslicemi (`font-variant-numeric: tabular-nums`), které zabraňují poskakování okolního rozhraní při inkrementaci.
+  - **Kritická kuráž a puls ultimátky**: Při poklesu zdraví pod 25 % se na liště kuráže aktivuje jemný výstražný puls (`.courage-critical`). Nabití speciální schopnosti (`#ult-indicator`) je plynule animováno čistým světelným pulsem bez posunu layoutu.
+  - **Živý arzenál v HUDu (`#hud-weapons-bar`)**: Zprovozněn dynamický spodní panel zobrazující aktuálně nesené zbraně lovce s odznáčky úrovní a pipy milníků, plně responzivní i na mobilních obrazovkách.
+  - **Dvouzáložková knižní pauza (`#pause-screen`)**: Původní nepřehledný vertikální seznam 20+ položek rozdělen do dvou tematických záložek s plátěnými záložkami:
+    1. *Výprava a výbava*: souhrnná karta běhu, karty vybavených zbraní s popisem a mřížka pasivních vylepšení.
+    2. *Rychlé nastavení*: přehledné seskupení zvuku, ovládání, grafiky/výkonu (60 FPS, FPS čítač, telegrafy útoků, bojová čísla a škálování mobilních prvků).
+  - **Mobilní responzivita a ergonomie dotyku**: Odstraněno pravidlo skrývající 4. a 5. statistiku na mobilu – nově se responzivně sbalují pouze textové popisky a ikony s čísly zůstávají viditelné i na 320px displejích. Indikátor připojeného gamepadu přesunut do horního rohu, aby nepřekrýval hlavní dotykové akční tlačítko.
+
 ## 2026-11-11 – Parita 6 ukázkových bossů s hospodským kánonem U Černého kocoura (ADR 0055)
 
 - **Kompletní mistrovské překreslení 6 ukázkových bossů (`src/render/bosses/showcaseBosses.ts`, GLOSSARY.md, ADR 0055)**:

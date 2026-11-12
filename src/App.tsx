@@ -1813,6 +1813,7 @@ export default function App() {
     }
   }, [gameState, pendingMilestones.length]);
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
+  const [pauseTab, setPauseTab] = useState<'summary' | 'settings'>('summary');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
@@ -1933,6 +1934,7 @@ export default function App() {
     interactPrompt: null as string | null,
     interactLabel: 'POUŽÍT',
     interactIcon: 'hand',
+    weaponsHash: '',
   });
 
   const runStatsRef = useRef(runStats);
@@ -2578,6 +2580,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     setGameState((cur) => {
       if (cur === 'playing') {
         sound.pause();
+        setPauseTab('summary');
         return 'paused';
       } else if (cur === 'paused') {
         sound.resume();
@@ -5442,6 +5445,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       interactPrompt: null,
       interactLabel: 'POUŽÍT',
       interactIcon: 'hand',
+      weaponsHash: '',
     });
 
     setIsTestModeOpen(false);
@@ -14483,6 +14487,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               const prevStats = runStatsRef.current;
               const nextChestProgress = Math.floor(engine.pointsChest);
+              const nextWeaponsSig = (player.weapons || []).map((w: any) => `${w.id}:${w.level}:${(w.milestones || []).length}`).join(',');
               const hasChanged =
                 prevStats.time !== newTime ||
                 prevStats.kills !== engine.kills ||
@@ -14498,7 +14503,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 prevStats.chestProgress !== nextChestProgress ||
                 prevStats.canInteract !== interactInfo.canInteract ||
                 prevStats.interactLabel !== interactInfo.label ||
-                prevStats.interactPrompt !== interactInfo.prompt;
+                prevStats.interactPrompt !== interactInfo.prompt ||
+                prevStats.weaponsHash !== nextWeaponsSig;
 
               if (hasChanged) {
                 setRunStats((prev) => ({
@@ -14520,6 +14526,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   interactPrompt: interactInfo.prompt,
                   interactLabel: interactInfo.label,
                   interactIcon: interactInfo.icon,
+                  weaponsHash: nextWeaponsSig,
                 }));
               }
             }
@@ -21307,7 +21314,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', position: 'relative' }}>
               <div
                 id="courage-container"
-                className="bar-container"
+                className={`bar-container ${runStats.hp / Math.max(1, runStats.maxHp) <= 0.25 ? 'courage-critical' : ''}`}
                 style={{ flex: 1 }}
                 aria-label={`Kuráž ${Math.ceil(runStats.hp)} z ${Math.ceil(runStats.maxHp)}`}
               >
@@ -21320,11 +21327,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     )}%`,
                   }}
                 />
-                <div className="bar-text" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                  <LadaFolkFlower variant="buttercup" size={15} spin />
+                <div className="bar-text" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <LadaFolkFlower variant="buttercup" size={14} />
                   <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><GameIcon icon="lion" size={16} /></span>
-                  <span>KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}</span>
-                  <LadaFolkFlower variant="cornflower" size={15} spin />
+                  <span style={{ fontWeight: 900, letterSpacing: '0.8px' }}>KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}</span>
+                  <LadaFolkFlower variant="cornflower" size={14} />
                 </div>
               </div>
               <div
@@ -21335,7 +21342,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 <PernicekIcon size={20} />
                 <span>{runStats.gingerbread}</span>
-                <LadaFolkFlower variant="carmine" size={13} withLeaves={false} spin />
+                <LadaFolkFlower variant="carmine" size={13} withLeaves={false} />
               </div>
               <button
                 className="hud-pause-btn"
@@ -21347,49 +21354,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
             </div>
 
-            {/* Stats row with Day/Night clock indicator & animated colorful folk flower dividers */}
-            <div id="stats-row">
-              <div className="stats-clock-block">
-                <span className="stats-clock-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon={runStats.dayPhase.icon} size={22} /></span>
-                <div>
-                  <div className="stats-clock-timer">{formatTimer(runStats.time)}</div>
-                  <div className="stats-clock-phase">
-                    {runStats.dayPhase.name}
-                  </div>
-                </div>
+            {/* Stats row with Day/Night clock indicator & aesthetic stat chips */}
+            <div id="stats-row" role="region" aria-label="Statistiky probíhající výpravy">
+              <div className="hud-stat-chip chip-clock" title={`Čas přežití: ${formatTimer(runStats.time)} • ${runStats.dayPhase.name}`}>
+                <span className="stats-clock-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon={runStats.dayPhase.icon} size={18} /></span>
+                <span className="stats-clock-timer">{formatTimer(runStats.time)}</span>
+                <span className="stats-clock-phase">{runStats.dayPhase.name}</span>
               </div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="buttercup" size={15} spin />
-              </span>
-              <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                Krejcary: {runStats.coins} <KrejcarIcon size={18} />
+              <div id="coins-text" className="hud-stat-chip chip-coins" title={`Získané krejcary: ${runStats.coins}`}>
+                <KrejcarIcon size={16} />
+                <span className="stat-label">Krejcary:</span>
+                <span className="stat-value">{runStats.coins}</span>
               </div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="poppy" size={15} spin="reverse" />
-              </span>
-              <div id="souls-text" style={{ color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}><GameIcon icon="urn" size={16} /> Dušičky: {runStats.souls}</div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="cornflower" size={15} spin />
-              </span>
-              <div id="kills-text" style={{ color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '5px' }}>Zklidněno: {runStats.kills} <GameIcon icon="bread" size={16} /></div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="carmine" size={15} spin="reverse" />
-              </span>
-              <div id="chest-progress-text" style={{ color: '#78350F', display: 'flex', alignItems: 'center', gap: '5px' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
-                <GameIcon icon="chest" size={16} /> Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
+              <div id="souls-text" className="hud-stat-chip chip-souls" title={`Osvobozené dušičky: ${runStats.souls}`}>
+                <GameIcon icon="urn" size={15} />
+                <span className="stat-label">Dušičky:</span>
+                <span className="stat-value">{runStats.souls}</span>
               </div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="daisy" size={15} spin />
-              </span>
+              <div id="kills-text" className="hud-stat-chip chip-kills" title={`Zklidněná strašidla: ${runStats.kills}`}>
+                <GameIcon icon="bread" size={15} />
+                <span className="stat-label">Zklidněno:</span>
+                <span className="stat-value">{runStats.kills}</span>
+              </div>
+              <div id="chest-progress-text" className="hud-stat-chip chip-chest" title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
+                <GameIcon icon="chest" size={15} />
+                <span className="stat-label">Poklad:</span>
+                <span className="stat-value">{runStats.chestProgress}/{DROP_THRESHOLDS.chest}</span>
+              </div>
             </div>
 
             {/* Boss Bar if boss spawned */}
             {runStats.bossHpPct !== null && (
               <div id="boss-bar-wrap">
                 <div className="boss-title-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  <LadaFolkFlower variant="poppy" size={18} spin />
+                  <LadaFolkFlower variant="poppy" size={18} />
                   <GameIcon icon="devil" size={20} /> {runStats.bossTitle} <GameIcon icon="devil" size={20} />
-                  <LadaFolkFlower variant="poppy" size={18} spin="reverse" />
+                  <LadaFolkFlower variant="poppy" size={18} />
                 </div>
                 <div id="boss-bar-container">
                   <div id="boss-hp-fill" style={{ width: `${runStats.bossHpPct}%` }} />
@@ -21406,6 +21406,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <GameIcon icon="warning" size={18} style={{ flexShrink: 0 }} />
                 <span className="boss-warning-text">{runStats.warningBanner.replace(/^[^\p{L}\p{N}]+/u, '').trim()}</span>
               </div>
+          )}
+
+          {/* Active Equipped Weapons Tray (HUD Arsenal) */}
+          {(engineRef.current.player?.weapons || []).length > 0 && (
+            <div id="hud-weapons-bar" role="region" aria-label="Nesený arzenál lovce">
+              {(engineRef.current.player?.weapons || []).map((w: any) => {
+                const wDef = WEAPONS[w.id];
+                if (!wDef) return null;
+                const isCane = w.id === 'cane';
+                const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
+                const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
+                const displayIcon = hasSoaked ? 'water' : wDef.icon;
+                const milestonesCount = (w.milestones || []).length;
+
+                return (
+                  <div
+                    key={w.id}
+                    className="hud-weapon-slot"
+                    title={`${displayName} (Úroveň ${w.level})${milestonesCount > 0 ? ` • ${milestonesCount} milník${milestonesCount > 1 ? 'y' : ''}` : ''}\n${wDef.desc}`}
+                    aria-label={`${displayName}, úroveň ${w.level}`}
+                  >
+                    <GameIcon icon={displayIcon} size={24} />
+                    <span className="hud-weapon-level-badge">
+                      {w.level}
+                    </span>
+                    {milestonesCount > 0 && (
+                      <div className="hud-weapon-milestones" aria-hidden="true">
+                        {Array.from({ length: milestonesCount }).map((_, mIdx) => (
+                          <span key={mIdx} className="hud-weapon-milestone-pip">✦</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           {/* Ultimate ability indicator button with cooldown countdown & visual readiness indicator */}
@@ -21448,13 +21484,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             return (
               <button
                 id="ult-indicator"
+                className={isReady ? 'ult-ready' : 'ult-charging'}
                 onClick={triggerUltimate}
                 style={{
-                  backgroundColor: isReady ? 'var(--blood-red)' : '#3E2723',
-                  transform: isReady ? 'translateX(-50%) scale(1.04)' : 'translateX(-50%) scale(1)',
                   overflow: 'hidden',
-                  padding: '8px 18px 11px',
-                  minWidth: '290px',
+                  padding: '7px 18px 10px',
+                  minWidth: '270px',
                 }}
                 title={`${abilityName} — ${isReady ? 'Připravena!' : `Nabíjí se (${Math.ceil(runStats.ultCd)} s)`}${keyHint ? ' ' + keyHint : ''}`}
               >
@@ -21464,7 +21499,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     position: 'absolute',
                     left: 0,
                     bottom: 0,
-                    height: '5px',
+                    height: '4px',
                     width: `${readinessPct}%`,
                     background: isReady ? '#FDE047' : '#F59E0B',
                     transition: 'width 0.15s linear',
@@ -21472,7 +21507,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 />
                 {isReady ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
-                    <LadaFolkFlower variant="buttercup" size={16} spin />
+                    <LadaFolkFlower variant="buttercup" size={16} />
                     <span
                       style={{
                         display: 'inline-flex',
@@ -21501,7 +21536,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         {keyHint}
                       </span>
                     ) : null}
-                    <LadaFolkFlower variant="buttercup" size={16} spin="reverse" />
+                    <LadaFolkFlower variant="buttercup" size={16} />
                   </span>
                 ) : (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
@@ -22411,17 +22446,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <span>Výprava pozastavena</span>
             </div>
 
-            <h1>
+            <h1 style={{ margin: '4px 0 2px 0' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <LadaFolkFlower variant="buttercup" size={22} spin />
+                <LadaFolkFlower variant="buttercup" size={22} />
                 <GameIcon icon="pause" size={24} /> HRA POZASTAVENA
-                <LadaFolkFlower variant="cornflower" size={22} spin />
+                <LadaFolkFlower variant="cornflower" size={22} />
               </span>
             </h1>
             <LadaBotanicalFlourish height={20} />
 
             {/* Top Primary Actions */}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', margin: '12px 0 10px' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', margin: '10px 0 12px' }}>
               <button
                 className="lada-btn"
                 style={{ background: 'var(--leaf-green)', fontSize: '1.2rem', padding: '10px 32px' }}
@@ -22441,17 +22476,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', padding: '10px 18px', fontWeight: 900 }}
-                onClick={() => {
-                  sound.coin();
-                  setIsSettingsDevOpen(true);
-                }}
-                title="Nastavení grafiky, osvětlení, audia a zobrazení"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="gear" size={16} /> Nastavení výpravy</span>
-              </button>
-              <button
-                className="lada-btn btn-small"
                 style={{ background: 'var(--blood-red)', padding: '10px 18px', color: '#FFFFFF' }}
                 onClick={quitToTavernFromPause}
                 title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
@@ -22460,362 +22484,499 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
             </div>
 
-            {/* In-pause toggles */}
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '6px 0 16px' }}>
-              <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
-                <span><GameIcon icon={GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon} size={18} /></span>
-                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
-              </div>
-              <div className="touch-toggle-btn" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240, maxWidth: '100%', padding: '8px 12px', textAlign: 'left' }}>
-                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="mobile" size={16} /> Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
-                <input id="mobile-accessibility-level" type="range" min={1} max={10} step={1} value={mobileAccessibilityLevel}
-                  onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
-                  aria-label="Úroveň mobilního usnadnění" style={{ width: '100%', accentColor: '#4D7C0F' }} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.8rem', fontWeight: 700 }}>
-                  <input type="checkbox" checked={mobileAccessibilityAllDevices} onChange={(event) => updateMobileAccessibilityAllDevices(event.target.checked)} />
-                  Použít i na jiných zařízeních
-                </label>
-                <span style={{ fontSize: '0.72rem', lineHeight: 1.25, opacity: 0.85 }}>
-                  {mobileAccessibilityEnabled
-                    ? `Útok a pohyb nepřátel −${mobileAccessibilityLevel * 2} %, poškození −${mobileAccessibilityLevel * 3} %, magnet +${mobileAccessibilityLevel * 5} %, hitbox lovce −${mobileAccessibilityLevel * 5} %.`
-                    : 'Účinky jsou vypnuté mimo dotyková zařízení.'}
+            {/* Bookmark Ribbon Tabs */}
+            <div className="modal-tabs" style={{ margin: '6px 0 14px' }}>
+              <button
+                type="button"
+                className={`tab-btn lada-bookmark-ribbon ribbon-poppy ${pauseTab === 'summary' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.coin();
+                  setPauseTab('summary');
+                }}
+                style={{
+                  fontWeight: 900,
+                  fontSize: '0.95rem',
+                  padding: '7px 20px',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <GameIcon icon="scroll" size={16} /> Výprava a výbava
                 </span>
-              </div>
-              <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="joystick" size={16} /> Joystick:</span> <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
-              </button>
-              <button className="sound-toggle-btn" onClick={toggleSound} title="Přepnout zvukové efekty">
-                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} /> {soundEnabled ? 'Zvuk: Zap' : 'Zvuk: Vyp'}</span>
-              </button>
-              <button className="sound-toggle-btn" onClick={toggleMusic} title="Přepnout vesnickou hudbu">
-                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} /> {musicEnabled ? 'Hudba: Zap' : 'Hudba: Vyp'}</span>
               </button>
               <button
-                className="touch-toggle-btn"
+                type="button"
+                className={`tab-btn lada-bookmark-ribbon ribbon-ochre ${pauseTab === 'settings' ? 'active' : ''}`}
                 onClick={() => {
                   sound.coin();
-                  const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
-                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
-                  window.dispatchEvent(new Event('resize'));
+                  setPauseTab('settings');
                 }}
-                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="lightning" size={14} /> Výkon:</span> <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  const nextShow = !meta.showPerfOverlay;
-                  saveMeta({ ...meta, showPerfOverlay: nextShow });
+                style={{
+                  fontWeight: 900,
+                  fontSize: '0.95rem',
+                  padding: '7px 20px',
                 }}
-                title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="chart" size={14} /> FPS:</span> <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  const nextShow = !meta.windupTelegraphCirclesEnabled;
-                  saveMeta({ ...meta, windupTelegraphCirclesEnabled: nextShow });
-                }}
-                title="Zapnout / vypnout kruhy nápřahu kolem útočících nepřátel"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="target" size={14} /> Kruhy nápřahu:</span> <span className="touch-toggle-text">{meta.windupTelegraphCirclesEnabled ? 'Zap' : 'Vyp'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  setIsCombatTextModalOpen(true);
-                }}
-                title="Nastavit kategorie plovoucích textů v aréně"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="chat" size={14} /> Texty:</span> <span className="touch-toggle-text">
-                  {getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'full'
-                    ? 'Plné'
-                    : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'tactical'
-                    ? 'Taktické'
-                    : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'performance'
-                    ? 'Vypnuto'
-                    : 'Vlastní'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <GameIcon icon="gear" size={16} /> Rychlé nastavení
                 </span>
               </button>
             </div>
 
-            {/* Run summary stats card */}
-            <div
-              style={{
-                background: 'var(--parchment)',
-                color: '#111111',
-                border: '3.5px solid var(--ink)',
-                borderRadius: '12px',
-                padding: '16px 20px',
-                margin: '16px 0',
-                textAlign: 'left',
-                boxShadow: '4px 4px 0px var(--ink)',
-                position: 'relative',
-                overflow: 'visible',
-              }}
-            >
-              <LadaCardCorners variant="default" showBottomCorners={true} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-                <div>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>
-                    Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Tulák'}
-                  </span>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#451A03', marginTop: '2px' }}>
-                    {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický tulák'}
+            {/* TAB 1: SUMMARY & EQUIPMENT */}
+            {pauseTab === 'summary' && (
+              <div className="pause-tab-content">
+                {/* Level Badge */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <div className="hud-level-badge" style={{ padding: '6px 16px', fontSize: '0.95rem' }}>
+                    <span><GameIcon icon={GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon} size={18} /></span>
+                    <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <GameIcon icon={runStats.dayPhase.icon} size={20} /> {runStats.dayPhase.name}
-                  </span>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#78350F' }}>
-                    Čas přežití: {formatTimer(runStats.time)}
-                  </div>
-                </div>
-              </div>
 
-              <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
-
-              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="lion" size={16} /> Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="map" size={16} /> Výprava: <strong>{runStats.levelTitle}</strong></span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="urn" size={16} /> Dušičky: <strong>{runStats.souls}</strong></span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="wheat" size={16} /> Chasníci: <strong>{runStats.chasniks}</strong></span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="bread" size={16} /> Zklidněno: <strong>{runStats.kills}</strong></span>
-              </div>
-            </div>
-
-            {/* Current weapons inventory */}
-            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--ink)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <LadaFolkFlower variant="poppy" size={16} spin />
-                <GameIcon icon="sword" size={18} /> Nesený arzenál a výbava lovce:
-                <LadaFolkFlower variant="buttercup" size={16} spin="reverse" />
-              </span>
-            </h3>
-
-            <div className="pause-weapons-grid">
-              {(engineRef.current.player?.weapons || []).map((w: any) => {
-                const wDef = WEAPONS[w.id];
-                if (!wDef) return null;
-                const dmgMult = engineRef.current.player?.damageMultiplier || 1;
-                const cooldownBonus = engineRef.current.player?.cooldownBonus ?? 0;
-                const rankDef = getWeaponRankDef(w.id, w.level);
-                const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
-                const stats = getRankedWeaponStats(w.id, w.level, w);
-                const playerCooldownBonus = cooldownBonus > 0 ? cooldownBonus : Math.max(0, ((engineRef.current.player?.cooldownMultiplier || 1) - 1) / 0.9);
-                const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
-                const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
-                const effectiveCd = Math.max(wDef.baseCd * (1 - COOLDOWN_REDUCTION_CAP), getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
-                const isCane = w.id === 'cane';
-                const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
-                const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
-                const displayIcon = hasSoaked ? 'water' : wDef.icon;
-                const isAtCap = weaponCooldownBonus >= COOLDOWN_REDUCTION_CAP - 0.001;
-
-                return (
-                  <div key={w.id} className="pause-weapon-card" style={{ position: 'relative' }}>
-                    <LadaCardCorners variant="default" showBottomCorners={false} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <GameIcon icon={displayIcon} size={22} /> {displayName}
+                {/* Run summary stats card */}
+                <div
+                  style={{
+                    background: 'var(--parchment)',
+                    color: '#111111',
+                    border: '3px solid var(--ink)',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    margin: '10px 0 16px',
+                    textAlign: 'left',
+                    boxShadow: '4px 4px 0px var(--ink)',
+                    position: 'relative',
+                    overflow: 'visible',
+                  }}
+                >
+                  <LadaCardCorners variant="default" showBottomCorners={true} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>
+                        Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Tulák'}
                       </span>
-                      <span
-                        style={{
-                          background: 'var(--blood-red)',
-                          color: '#FFFFFF',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontWeight: 900,
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        Úr. {w.level}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900, flexWrap: 'wrap' }}>
-                      <span style={{ color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="impact" size={14} /> Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="clock" size={14} /> Nabíjení: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (+${Math.round((1 / stats.cooldownMult - 1) * 100)} %)` : ''}</span>
-                    </div>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
-                      {wDef.desc}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Active passive perks / upgrades */}
-            {(() => {
-              const pl = engineRef.current.player;
-              if (!pl) return null;
-              const perks: { icon: string; name: string; desc: string; badge?: string }[] = [];
-              if (pl.kavaCount > 0) {
-                const cdBonusPct = (pl.cooldownBonus || 0) * 100;
-                perks.push({
-                  icon: 'opravdova_kava',
-                  name: `Opravdová káva`,
-                  desc: `+${cdBonusPct.toFixed(0)} % nabíjení (rychlost všech útoků)`,
-                  badge: `${pl.kavaCount}×`,
-                });
-              }
-              if (pl.jelitoCount > 0) {
-                const dmgBonusPct = pl.jelitoCount * 15;
-                perks.push({
-                  icon: 'krvave_jelito',
-                  name: `Krvavé jelito`,
-                  desc: `Násobení poškození všech zbraní ×${(1.15 ** pl.jelitoCount).toFixed(2)}; každý kus násobí ×1,15`,
-                  badge: `${pl.jelitoCount}×`,
-                });
-              }
-              if ((pl.tulakDamageBonus || 0) > 0) {
-                perks.push({
-                  icon: 'bag',
-                  name: `Tulácký instinkt`,
-                  desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi násobiteli poškození`,
-                  badge: `+${pl.tulakDamageBonus} %`,
-                });
-              }
-              if (pl.kurazCount > 0) {
-                perks.push({
-                  icon: 'medvedi_mast',
-                  name: `Medvědí mast`,
-                  desc: `+${pl.kurazCount * 30} k maximální kuráži a okamžité zhojení`,
-                  badge: `${pl.kurazCount}×`,
-                });
-              }
-              if ((pl.bearMaskLevel || 0) > 0) {
-                const healBonusPct = ((pl.bearMaskLevel || 1) - 1) * 20;
-                const dmgPct = 50 * (1 + ((pl.bearMaskLevel || 1) - 1) * 0.2);
-                perks.push({
-                  icon: 'bear',
-                  name: `Maska medvěda`,
-                  desc: `Přeléčení se mění v ${dmgPct.toFixed(0)} % zranění do okruhu 230 px${healBonusPct > 0 ? `; +${healBonusPct} % léčení i zranění masky` : ''}`,
-                  badge: `Úr. ${pl.bearMaskLevel}`,
-                });
-              }
-              if (pl.regenLevel > 0) {
-                perks.push({
-                  icon: 'clover',
-                  name: `Voňavé býlí (Bylinková zahrádka)`,
-                  desc: `+${pl.regenLevel * 4} kuráže doplňováno každých 5 sekund`,
-                  badge: `Úr. ${pl.regenLevel}`,
-                });
-              }
-              if (pl.speedCount > 0) {
-                perks.push({
-                  icon: 'boots',
-                  name: `Sedmimílové krpce`,
-                  desc: `+${pl.speedCount * 20} k rychlosti pohybu při obcházení strašidel`,
-                  badge: `${pl.speedCount}×`,
-                });
-              }
-              if (pl.magnetCount > 0) {
-                perks.push({
-                  icon: 'lantern',
-                  name: `Pytlácká petrolejka`,
-                  desc: `+${pl.magnetCount * 30} k dosahu přitahování krejcarů a posilujících dobrot`,
-                  badge: `${pl.magnetCount}×`,
-                });
-              }
-              if (pl.hasSoakedCane) {
-                perks.push({
-                  icon: 'drop',
-                  name: 'Mokrý prut',
-                  desc: 'Údery osikového prutu zchladí a výrazně zpomalují zasažené bubáky',
-                  badge: 'Aktivní',
-                });
-              }
-              if ((pl.stickyPlumJamStacks || 0) > 0) {
-                perks.push({
-                  icon: 'honey',
-                  name: 'Krajáč povidel',
-                  desc: `-${Math.round((pl.plumPoiseReduction || 0.20) * 100)} % odolnost bubáků vůči odhození a po zahnání tvoří zpomalující louži (-${Math.round((pl.plumSlowRatio || 0.35) * 100)} % rychlost)`,
-                  badge: `${pl.stickyPlumJamStacks}×`,
-                });
-              }
-              if ((pl.goatBellStacks || 0) > 0) {
-                perks.push({
-                  icon: 'bell',
-                  name: 'Kozí zvonek',
-                  desc: `Každé ${(pl.goatBellInterval || 4.0).toFixed(1)} s běhu zazvoní: vyruší nápřah strašidel a přitáhne perníčky i krejcary v okruhu ${pl.goatBellRadius || 180} px`,
-                  badge: `${pl.goatBellStacks}×`,
-                });
-              }
-              if ((pl.itchySocksStacks || 0) > 0) {
-                perks.push({
-                  icon: 'socks',
-                  name: 'Kousavé fusekle',
-                  desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a +${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % nabíjení v pohybu`,
-                  badge: `${pl.itchySocksStacks}×`,
-                });
-              }
-
-              if (perks.length === 0) return null;
-
-              return (
-                <div style={{ marginTop: '12px' }}>
-                  <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: 'var(--ink)', fontSize: '1.05rem' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <LadaFolkFlower variant="buttercup" size={16} spin />
-                      <GameIcon icon="sparkles" size={18} /> Získaná vylepšení a posílení lovce:
-                      <LadaFolkFlower variant="cornflower" size={16} spin="reverse" />
-                    </span>
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
-                    {perks.map((p, idx) => (
-                      <div
-                        key={idx}
-                        className="pause-weapon-card"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '8px 12px',
-                          position: 'relative',
-                        }}
-                      >
-                        <LadaCardCorners variant="default" showBottomCorners={false} />
-                        <div style={{ flexShrink: 0 }}>
-                          <GameIcon icon={p.icon} size={28} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 900, fontSize: '1.02rem', color: '#111111' }}>
-                              {p.name}
-                            </span>
-                            {p.badge && (
-                              <span
-                                style={{
-                                  background: 'var(--wood-dark)',
-                                  color: '#FEF3C7',
-                                  padding: '1px 6px',
-                                  borderRadius: '4px',
-                                  fontWeight: 900,
-                                  fontSize: '0.8rem',
-                                  border: '1px solid var(--ink)',
-                                }}
-                              >
-                                {p.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', fontWeight: 700, color: '#333333', lineHeight: 1.2 }}>
-                            {p.desc}
-                          </p>
-                        </div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#451A03', marginTop: '2px' }}>
+                        {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický tulák'}
                       </div>
-                    ))}
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <GameIcon icon={runStats.dayPhase.icon} size={20} /> {runStats.dayPhase.name}
+                      </span>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#78350F' }}>
+                        Čas přežití: {formatTimer(runStats.time)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
+
+                  <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="lion" size={16} /> Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="map" size={16} /> Výprava: <strong>{runStats.levelTitle}</strong></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="urn" size={16} /> Dušičky: <strong>{runStats.souls}</strong></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="wheat" size={16} /> Chasníci: <strong>{runStats.chasniks}</strong></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="bread" size={16} /> Zklidněno: <strong>{runStats.kills}</strong></span>
                   </div>
                 </div>
-              );
-            })()}
+
+                {/* Current weapons inventory */}
+                <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--ink)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <LadaFolkFlower variant="poppy" size={16} />
+                    <GameIcon icon="sword" size={18} /> Nesený arzenál a výbava lovce:
+                    <LadaFolkFlower variant="buttercup" size={16} />
+                  </span>
+                </h3>
+
+                <div className="pause-weapons-grid">
+                  {(engineRef.current.player?.weapons || []).map((w: any) => {
+                    const wDef = WEAPONS[w.id];
+                    if (!wDef) return null;
+                    const dmgMult = engineRef.current.player?.damageMultiplier || 1;
+                    const cooldownBonus = engineRef.current.player?.cooldownBonus ?? 0;
+                    const rankDef = getWeaponRankDef(w.id, w.level);
+                    const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
+                    const stats = getRankedWeaponStats(w.id, w.level, w);
+                    const playerCooldownBonus = cooldownBonus > 0 ? cooldownBonus : Math.max(0, ((engineRef.current.player?.cooldownMultiplier || 1) - 1) / 0.9);
+                    const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
+                    const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
+                    const effectiveCd = Math.max(wDef.baseCd * (1 - COOLDOWN_REDUCTION_CAP), getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
+                    const isCane = w.id === 'cane';
+                    const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
+                    const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
+                    const displayIcon = hasSoaked ? 'water' : wDef.icon;
+
+                    return (
+                      <div key={w.id} className="pause-weapon-card" style={{ position: 'relative' }}>
+                        <LadaCardCorners variant="default" showBottomCorners={false} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <GameIcon icon={displayIcon} size={22} /> {displayName}
+                          </span>
+                          <span
+                            style={{
+                              background: 'var(--blood-red)',
+                              color: '#FFFFFF',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 900,
+                              fontSize: '0.9rem',
+                            }}
+                          >
+                            Úr. {w.level}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900, flexWrap: 'wrap' }}>
+                          <span style={{ color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="impact" size={14} /> Zásah: ~{estDmg}</span>
+                          <span style={{ color: '#166534', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="clock" size={14} /> Nabíjení: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (+${Math.round((1 / stats.cooldownMult - 1) * 100)} %)` : ''}</span>
+                        </div>
+                        <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
+                          {wDef.desc}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Active passive perks / upgrades */}
+                {(() => {
+                  const pl = engineRef.current.player;
+                  if (!pl) return null;
+                  const perks: { icon: string; name: string; desc: string; badge?: string }[] = [];
+                  if (pl.kavaCount > 0) {
+                    const cdBonusPct = (pl.cooldownBonus || 0) * 100;
+                    perks.push({
+                      icon: 'opravdova_kava',
+                      name: `Opravdová káva`,
+                      desc: `+${cdBonusPct.toFixed(0)} % nabíjení (rychlost všech útoků)`,
+                      badge: `${pl.kavaCount}×`,
+                    });
+                  }
+                  if (pl.jelitoCount > 0) {
+                    perks.push({
+                      icon: 'krvave_jelito',
+                      name: `Krvavé jelito`,
+                      desc: `Násobení poškození všech zbraní ×${(1.15 ** pl.jelitoCount).toFixed(2)}; každý kus násobí ×1,15`,
+                      badge: `${pl.jelitoCount}×`,
+                    });
+                  }
+                  if ((pl.tulakDamageBonus || 0) > 0) {
+                    perks.push({
+                      icon: 'bag',
+                      name: `Tulácký instinkt`,
+                      desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi násobiteli poškození`,
+                      badge: `+${pl.tulakDamageBonus} %`,
+                    });
+                  }
+                  if (pl.kurazCount > 0) {
+                    perks.push({
+                      icon: 'medvedi_mast',
+                      name: `Medvědí mast`,
+                      desc: `+${pl.kurazCount * 30} k maximální kuráži a okamžité zhojení`,
+                      badge: `${pl.kurazCount}×`,
+                    });
+                  }
+                  if ((pl.bearMaskLevel || 0) > 0) {
+                    const healBonusPct = ((pl.bearMaskLevel || 1) - 1) * 20;
+                    const dmgPct = 50 * (1 + ((pl.bearMaskLevel || 1) - 1) * 0.2);
+                    perks.push({
+                      icon: 'bear',
+                      name: `Maska medvěda`,
+                      desc: `Přeléčení se mění v ${dmgPct.toFixed(0)} % zranění do okruhu 230 px${healBonusPct > 0 ? `; +${healBonusPct} % léčení i zranění masky` : ''}`,
+                      badge: `Úr. ${pl.bearMaskLevel}`,
+                    });
+                  }
+                  if (pl.regenLevel > 0) {
+                    perks.push({
+                      icon: 'clover',
+                      name: `Voňavé býlí (Bylinková zahrádka)`,
+                      desc: `+${pl.regenLevel * 4} kuráže doplňováno každých 5 sekund`,
+                      badge: `Úr. ${pl.regenLevel}`,
+                    });
+                  }
+                  if (pl.speedCount > 0) {
+                    perks.push({
+                      icon: 'boots',
+                      name: `Sedmimílové krpce`,
+                      desc: `+${pl.speedCount * 20} k rychlosti pohybu při obcházení strašidel`,
+                      badge: `${pl.speedCount}×`,
+                    });
+                  }
+                  if (pl.magnetCount > 0) {
+                    perks.push({
+                      icon: 'lantern',
+                      name: `Pytlácká petrolejka`,
+                      desc: `+${pl.magnetCount * 30} k dosahu přitahování krejcarů a posilujících dobrot`,
+                      badge: `${pl.magnetCount}×`,
+                    });
+                  }
+                  if (pl.hasSoakedCane) {
+                    perks.push({
+                      icon: 'drop',
+                      name: 'Mokrý prut',
+                      desc: 'Údery osikového prutu zchladí a výrazně zpomalují zasažené bubáky',
+                      badge: 'Aktivní',
+                    });
+                  }
+                  if ((pl.stickyPlumJamStacks || 0) > 0) {
+                    perks.push({
+                      icon: 'honey',
+                      name: 'Krajáč povidel',
+                      desc: `-${Math.round((pl.plumPoiseReduction || 0.20) * 100)} % odolnost bubáků vůči odhození a po zahnání tvoří zpomalující louži (-${Math.round((pl.plumSlowRatio || 0.35) * 100)} % rychlost)`,
+                      badge: `${pl.stickyPlumJamStacks}×`,
+                    });
+                  }
+                  if ((pl.goatBellStacks || 0) > 0) {
+                    perks.push({
+                      icon: 'bell',
+                      name: 'Kozí zvonek',
+                      desc: `Každé ${(pl.goatBellInterval || 4.0).toFixed(1)} s běhu zazvoní: vyruší nápřah strašidel a přitáhne perníčky i krejcary v okruhu ${pl.goatBellRadius || 180} px`,
+                      badge: `${pl.goatBellStacks}×`,
+                    });
+                  }
+                  if ((pl.itchySocksStacks || 0) > 0) {
+                    perks.push({
+                      icon: 'socks',
+                      name: 'Kousavé fusekle',
+                      desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a +${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % nabíjení v pohybu`,
+                      badge: `${pl.itchySocksStacks}×`,
+                    });
+                  }
+
+                  if (perks.length === 0) return null;
+
+                  return (
+                    <div style={{ marginTop: '12px' }}>
+                      <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: 'var(--ink)', fontSize: '1.05rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <LadaFolkFlower variant="buttercup" size={16} />
+                          <GameIcon icon="sparkles" size={18} /> Získaná vylepšení a posílení lovce:
+                          <LadaFolkFlower variant="cornflower" size={16} />
+                        </span>
+                      </h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
+                        {perks.map((p, idx) => (
+                          <div
+                            key={idx}
+                            className="pause-weapon-card"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 12px',
+                              position: 'relative',
+                            }}
+                          >
+                            <LadaCardCorners variant="default" showBottomCorners={false} />
+                            <div style={{ flexShrink: 0 }}>
+                              <GameIcon icon={p.icon} size={28} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 900, fontSize: '1.02rem', color: '#111111' }}>
+                                  {p.name}
+                                </span>
+                                {p.badge && (
+                                  <span
+                                    style={{
+                                      background: 'var(--wood-dark)',
+                                      color: '#FEF3C7',
+                                      padding: '1px 6px',
+                                      borderRadius: '4px',
+                                      fontWeight: 900,
+                                      fontSize: '0.8rem',
+                                      border: '1px solid var(--ink)',
+                                    }}
+                                  >
+                                    {p.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', fontWeight: 700, color: '#333333', lineHeight: 1.2 }}>
+                                {p.desc}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* TAB 2: QUICK SETTINGS */}
+            {pauseTab === 'settings' && (
+              <div className="pause-tab-content">
+                <div className="pause-settings-grid">
+                  {/* Card 1: Zvuk a hudba */}
+                  <div className="pause-setting-card">
+                    <LadaCardCorners variant="default" showBottomCorners={false} />
+                    <h4><GameIcon icon="sound_on" size={18} /> Zvuk a hudba</h4>
+                    <div className="pause-setting-row">
+                      <span>Zvukové efekty:</span>
+                      <button className="sound-toggle-btn" onClick={toggleSound} title="Přepnout zvukové efekty">
+                        <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} />
+                          {soundEnabled ? 'Zapnuto' : 'Vypnuto'}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="pause-setting-row">
+                      <span>Vesnická hudba:</span>
+                      <button className="sound-toggle-btn" onClick={toggleMusic} title="Přepnout vesnickou hudbu">
+                        <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} />
+                          {musicEnabled ? 'Zapnuto' : 'Vypnuto'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Ovládání hry */}
+                  <div className="pause-setting-card">
+                    <LadaCardCorners variant="default" showBottomCorners={false} />
+                    <h4><GameIcon icon="gamepad" size={18} /> Ovládání hry</h4>
+                    <div className="pause-setting-row">
+                      <span>Dotykový joystick:</span>
+                      <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon="joystick" size={16} />
+                          {touchEnabled ? 'Zapnuto' : 'Vypnuto'}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="pause-setting-row">
+                      <span>Aktivní ovládání:</span>
+                      <span style={{ fontWeight: 900, color: '#1C1613', fontSize: '0.88rem' }}>
+                        {(isTouchScreen || touchEnabled) ? 'Dotykový displej' : gamepadUiState.connected ? `Gamepad (${gamepadUiState.activeDevice})` : 'Klávesnice & myš'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Zobrazení a plynulost */}
+                  <div className="pause-setting-card">
+                    <LadaCardCorners variant="default" showBottomCorners={false} />
+                    <h4><GameIcon icon="lightning" size={18} /> Plynulost a zobrazení</h4>
+                    <div className="pause-setting-row">
+                      <span>Režim výkonu:</span>
+                      <button
+                        className="touch-toggle-btn"
+                        onClick={() => {
+                          sound.coin();
+                          const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
+                          saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
+                          window.dispatchEvent(new Event('resize'));
+                        }}
+                        title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon="lightning" size={14} /> {meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="pause-setting-row">
+                      <span>Statistiky & FPS:</span>
+                      <button
+                        className="touch-toggle-btn"
+                        onClick={() => {
+                          sound.coin();
+                          saveMeta({ ...meta, showPerfOverlay: !meta.showPerfOverlay });
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon="chart" size={14} /> {meta.showPerfOverlay ? 'Zapnuto' : 'Vypnuto'}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="pause-setting-row">
+                      <span>Kruhy nápřahu útoků:</span>
+                      <button
+                        className="touch-toggle-btn"
+                        onClick={() => {
+                          sound.coin();
+                          saveMeta({ ...meta, windupTelegraphCirclesEnabled: !meta.windupTelegraphCirclesEnabled });
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon="target" size={14} /> {meta.windupTelegraphCirclesEnabled ? 'Zapnuto' : 'Vypnuto'}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="pause-setting-row">
+                      <span>Plovoucí bojové texty:</span>
+                      <button
+                        className="touch-toggle-btn"
+                        onClick={() => {
+                          sound.coin();
+                          setIsCombatTextModalOpen(true);
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <GameIcon icon="chat" size={14} />
+                          {getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'full'
+                            ? 'Plné'
+                            : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'tactical'
+                            ? 'Taktické'
+                            : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'performance'
+                            ? 'Vypnuto'
+                            : 'Vlastní'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Mobilní usnadnění */}
+                  <div className="pause-setting-card" style={{ gridColumn: '1 / -1' }}>
+                    <LadaCardCorners variant="default" showBottomCorners={false} />
+                    <h4><GameIcon icon="mobile" size={18} /> Mobilní usnadnění & vyvážení obtížnosti</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900 }}>Úroveň pomoci: {mobileAccessibilityLevel} / 10</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', fontWeight: 800 }}>
+                          <input type="checkbox" checked={mobileAccessibilityAllDevices} onChange={(event) => updateMobileAccessibilityAllDevices(event.target.checked)} />
+                          Aktivovat i pro počítač a gamepad
+                        </label>
+                      </div>
+                      <input
+                        id="mobile-accessibility-level"
+                        type="range"
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={mobileAccessibilityLevel}
+                        onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
+                        aria-label="Úroveň mobilního usnadnění"
+                        style={{ width: '100%', accentColor: '#4D7C0F' }}
+                      />
+                      <span style={{ fontSize: '0.78rem', lineHeight: 1.3, opacity: 0.88 }}>
+                        {mobileAccessibilityEnabled
+                          ? `Útok a pohyb nepřátel −${mobileAccessibilityLevel * 2} %, poškození −${mobileAccessibilityLevel * 3} %, magnet +${mobileAccessibilityLevel * 5} %, hitbox lovce −${mobileAccessibilityLevel * 5} %.`
+                          : 'Účinky jsou aktivní pouze na dotykových zařízeních nebo při zaškrtnutí volby výše.'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Full settings dialog button */}
+                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    className="lada-btn btn-small"
+                    style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', padding: '10px 24px', fontWeight: 900 }}
+                    onClick={() => {
+                      sound.coin();
+                      setIsSettingsDevOpen(true);
+                    }}
+                    title="Kompletní nastavení grafiky, osvětlení, audia a vývojářské nástroje"
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <GameIcon icon="gear" size={16} /> Otevřít všechna podrobná nastavení hry
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

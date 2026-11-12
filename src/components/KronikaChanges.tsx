@@ -10,6 +10,18 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '12. listopadu 2026',
+    title: 'Učesanější a přehlednější herní UI/UX a knižní pauza',
+    summary: 'Kompletní modernizace herního rozhraní a pauzy: zklidnění rotací HUDu, jednotné statové čipy s tabulkovými číslicemi, živý arzenál v HUDu a dvouzáložková knižní pauza s plátěnými záložkami.',
+    items: [
+      '🛡️ Klidný ladovský HUD: Odstraněny rušivé rychlé rotace květin v herní liště; nahrazeny důstojnými folklorními motivy s podporou sníženého pohybu (prefers-reduced-motion).',
+      '🔢 Jednotné statové čipy: Čas, perníčky, dušičky, zklidnění bubáci a truhly v sjednocených čipech s tabulkovým řezem číslic (tabular-nums).',
+      '⚔️ Živý arzenál lovce: Přímo v herním HUDu se dynamicky zobrazuje nesená výbava s odznáčky úrovní a milníky.',
+      '📖 Knižní pauza: Rozdělení původního dlouhého seznamu do dvou čistých záložek (Výprava a výbava, Rychlé nastavení) s mašlemi a přehlednými kartami.',
+      '📱 Mobilní responzivita: Statistiky na telefonech se již neskrývají, nýbrž elegantně sbalují své textové popisky; gamepad indikátor přesunut mimo dosah dotykových tlačítek.',
+    ],
+  },
+  {
     date: '9. listopadu 2026',
     title: 'Vyjasnění Bubácké díry a Strachem nacpaný Barbucha (ADR 0050)',
     summary: 'Kompletní přepracování nočního nebezpečí Bubácké díry a zavedení nového minibosse Strachem nacpaného Barbuchy s inverzním škálováním strachem lovce, vyfukováním, salvou žihadel a posilující Škvarkovou plackou.',
