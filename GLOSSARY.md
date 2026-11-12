@@ -80,6 +80,42 @@ _Avoid_: confuse, zmatení, inverted controls, debuff trapas
 Obranný zbraňový artefakt získávaný z Královského věna po odkletí Zakleté princezny, jenž při každém obdrženém zásahu lovce nebo prasknutí štítu vymrští do všech stran salvu 12 perel odrážejících se od překážek a nepřátel.
 _Avoid_: perly, perl necklace, obranný náhrdelník
 
+**Otesánek**:
+Vzácný nenasytný megaboss z Erbenových pohádek v podobě živého vykopaného pařezu, který se s 20% šancí zjevuje ze selhané Bubácké díry v letních a polních měsících; svým čelním gravitačním chřtánem pohlcuje střely i perníčky a roste až na 2,4× měřítko, přičemž je zranitelný výhradně ze zálohy a jeho porážka přichází po 60 sekundách nebo protržením břicha z přejedení.
+_Avoid_: pařez, dřevěný boss, nenasytný pařez, dřevorubec
+
+**Trnitý kruh z živých kořenů**:
+Kruhová bariéra o poloměru 450 px vytyčená oživlými kořeny Otesánka, jež uzavírá bojiště do duelu 1v1, zraňuje lovce při kontaktu s trny a pozastavuje přísun vln Režiséra výpravy.
+_Avoid_: kořenová aréna, trnitá ohrada, wood ring
+
+**Otesánkův bezedný škopek**:
+Sběračský a obranný zbraňový artefakt získávaný z útrob puklého Otesánka, jenž v pravidelných 3sekundových pulzech stahuje perníčky a jídlo z celého bojiště a z 50 % přeměňuje čelní zásahy střelami na léčivou perníkovou drť.
+_Avoid_: škopek, bezedný hrnec, magnet na perníčky
+
+**Permonický král**:
+Vzácný podzemní trpasličí megaboss z krušnohorských a příbramských štol jedoucí v okovaném důlním vozíku, který se s 20% šancí dere ze selhané Bubácké díry v kamenitých a zimních měsících; brázdí arénu jako odrážející se beranidlo, vyvolává stropní závaly opukových balvanů a vrhá třaskavé kahany, dokud v 60. sekundě nezazní večerní klekání ukončující směnu.
+_Avoid_: trpaslík, permoník, král permoníků, horník
+
+**Hradba z důlní výdřevy a opuky**:
+Izolovaná aréna o poloměru 450 px ohraničená těžkými důlními trámy a skalními bloky, sloužící Permonickému králi k fyzikálním odrazům vozíku a chránící okolní bojiště před padajícím kamením.
+_Avoid_: důlní aréna, výdřeva, šachta ring
+
+**Rubínový důlní kahan**:
+Aktivní zbraňový artefakt do 5. slotu získávaný po směně s Permonickým králem, který vyzařuje kužel intenzivního červeného světla oslepujícího a zpomalujícího nepřátele o 45 %, pálícího stínové běsy a odhalujícího skryté truhly na bojišti.
+_Avoid_: kahan, důlní lucerna, baterka
+
+**Jakub Krčín**:
+Vzácný barokní megaboss ze slavné jihočeské pověsti, zapřažený čerty za trest do ohnivého pluhu, který se s 20% šancí vyvalí ze selhané Bubácké díry ve vodních a deštivých měsících; se svým pekelným spřežením vyrývá do arény trvalé plamenné brázdy a duel končí po 60 sekundách přetržením čertovských opratí nebo jeho skolením.
+_Avoid_: rybníkář, Krčín, stavitel, ohnivý oráč
+
+**Kruhová ohnivá brázda**:
+Dočasná arénová ohrada o poloměru 450 px vyrytá Krčínovým pekelným pluhem, doplněná o 3 dřevěná vodní stavidla na obvodu, jejichž nakopnutím lovec uvolní vodu k uhašení hořících brázd a zabahnění spřežení.
+_Avoid_: ohnivý kruh, brázdová aréna, pluh aréna
+
+**Krčínovo vyměřovací kolo**:
+Taktický obranný artefakt získávaný po vyčerpání Krčínova spřežení, jenž při 1sekundovém zastavení lovce automaticky vztyčí kamennou hráz pohlcující 3 zásahy a trvale navyšuje plošný dopad (AoE) všech primárních zbraní o 35 %.
+_Avoid_: vyměřovací kolo, měřičské kolo, hrázový amulet
+
 **Mariáš ďáblů**:
 Bojová mechanika Pekelného Čerta, kdy ze svého balíčku pravidelně tasí mariášovou kartu (Srdce, Kule, Listy, Žaludy) s tematickým útokem či vyvoláním pekelné havěti.
 _Avoid_: card attack, boss deck, spell cards
