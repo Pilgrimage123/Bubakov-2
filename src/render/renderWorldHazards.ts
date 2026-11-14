@@ -1227,6 +1227,25 @@ export function renderWorldHazardsAndEncounters(
           ctx.stroke();
           ctx.setLineDash([]);
         }
+      } else if (h.kind === 'berry-puddle') {
+        // ADR 0045: Calm floor wash for Boruvkovy diblik's sticky blueberry juice puddle
+        ctx.fillStyle = isWarning ? 'rgba(67, 56, 202, 0.24)' : 'rgba(67, 56, 202, 0.34)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, h.radius, h.radius * 0.7, 0.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isWarning ? 'rgba(49, 46, 129, 0.35)' : 'rgba(49, 46, 129, 0.72)';
+        ctx.beginPath();
+        ctx.arc(-h.radius * 0.25, -h.radius * 0.08, 3.8, 0, Math.PI * 2);
+        ctx.arc(h.radius * 0.22, h.radius * 0.14, 4.4, 0, Math.PI * 2);
+        ctx.arc(h.radius * 0.04, -h.radius * 0.22, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        if (isWarning) {
+          ctx.strokeStyle = '#818CF8';
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       } else if (h.type === 'mud') {
         // ADR 0045: Calm 60% floor rule - soft watercolor mud wash without dark ink outline
         ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : 'rgba(90, 56, 37, 0.85)';

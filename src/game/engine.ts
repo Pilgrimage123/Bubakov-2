@@ -18,6 +18,7 @@ import { getCachedHomingTarget } from './homing';
 import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './targeting';
 import { stepCrowForaging, restoreStolenBundleDrops } from './crowForaging';
 import { tryEmitParticle, getParticleLimit, tryEmitLadaComicPopup } from './particles';
+import { stepTacticalRegularAi } from './enemyAi';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
 import { WEAPONS, createWeaponMasteryState, getWeaponDamage } from '../data/weapons';
@@ -1730,12 +1731,15 @@ export class GameEngine {
       interruptAttack() {
         this.isAttacking = false;
         this.windupTimer = 0;
+        this.strikeTimer = 0;
+        if (this.aiState === 'windup') this.aiState = 'idle';
       },
 
       update(dt: number, player: any) {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
+        if (this.strikeTimer > 0) this.strikeTimer = Math.max(0, this.strikeTimer - dt);
         if (this.vycerpanyTimer > 0) this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
         if (this.rehtackarBuffTimer && this.rehtackarBuffTimer > 0) {
           this.rehtackarBuffTimer = Math.max(0, this.rehtackarBuffTimer - dt);
@@ -7869,10 +7873,51 @@ export class GameEngine {
               }
             }
           } else {
-            const moveDir = this.panicked ? dir + Math.PI : dir;
-            this.vx = Math.cos(moveDir) * spd;
-            this.vy = Math.sin(moveDir) * spd;
+            const isEliteOrBoss = Boolean(this.isBoss || this.isMiniboss || this.category === 'bosses');
+            const windupMult = isEliteOrBoss ? 1.0 : 1.3;
+            const specialCdMult = isEliteOrBoss ? 1.0 : 1.3;
+            const handledTactical = stepTacticalRegularAi(this, {
+              dt,
+              gameTime: self.state.gameTime || 0,
+              activeLevelId: self.state.activeLevelId ?? 0,
+              player,
+              spd,
+              dist,
+              dir,
+              windupMult,
+              specialCdMult,
+              projectiles: self.state.projectiles,
+              addHazard: addEnemyHazard,
+              emitText: (x: number, y: number, text: string, color: string, isCrit?: boolean) =>
+                self.emitDamageText(x, y, text, color, Boolean(isCrit)),
+              playSound: (kind: string) => self.callbacks?.onSound?.(kind),
+              emitParticle: (
+                x: number,
+                y: number,
+                vx: number,
+                vy: number,
+                color: string,
+                size: number,
+                life: number
+              ) => {
+                tryEmitParticle(
+                  self.state.particles,
+                  () => ({ x, y, vx, vy, color, size, life, maxLife: life }),
+                  self.state.meta?.performanceProfile
+                );
+              },
+              decrementTimers: true,
+            });
+            if (!handledTactical) {
+              const moveDir = this.panicked ? dir + Math.PI : dir;
+              this.vx = Math.cos(moveDir) * spd;
+              this.vy = Math.sin(moveDir) * spd;
+            }
           }
+        }
+
+        if (Math.abs(this.vx) > 0.1) {
+          this.lastDx = this.vx;
         }
 
         const previousX = this.x;
@@ -8043,8 +8088,9 @@ export class GameEngine {
 
         // Říční rak a Královský Vele-rak: Čelní krunýř odráží 75-80 % poškození
         if ((this.id === 'rak_ricni' || this.id === 'kralovsky_vele_rak') && kbx !== 0) {
-          const facing = (this.vx || 0) < 0 ? -1 : 1;
-          const isFrontal = (facing > 0 && kbx > 0) || (facing < 0 && kbx < 0);
+          const facingVal = Math.abs(this.vx || 0) > 0.1 ? this.vx : (this.lastDx ?? 1);
+          const facing = facingVal < 0 ? -1 : 1;
+          const isFrontal = (facing > 0 && kbx < 0) || (facing < 0 && kbx > 0);
           if (isFrontal) {
             amount *= (this.id === 'kralovsky_vele_rak' ? 0.20 : 0.25);
             self.emitDamageText(this.x, this.y - 25, 'KRUNÝŘ! 🛡️', '#0EA5E9', true);
@@ -10084,6 +10130,23 @@ export class GameEngine {
         p.angle = newAng;
       }
 
+      if (p.boomerang && p.hitCooldown && p.hitCooldown > 0) {
+        p.hitCooldown -= dt;
+      }
+
+      if (p.boomerang && p.owner && !p.owner.isDefeated && !p.owner.dead) {
+        if (p.life < (p.maxLife || 3.0) * 0.55) {
+          const retAng = Math.atan2(p.owner.y - p.y, p.owner.x - p.x);
+          p.vx = Math.cos(retAng) * (p.speed || 280);
+          p.vy = Math.sin(retAng) * (p.speed || 280);
+          p.angle = retAng;
+          if (Math.hypot(p.owner.x - p.x, p.owner.y - p.y) < (p.owner.radius || 20) + 15) {
+            p.dead = true;
+            continue;
+          }
+        }
+      }
+
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
@@ -10143,6 +10206,9 @@ export class GameEngine {
 
       if (p.isEnemy) {
         if (player && player.hp > 0 && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+          if (p.boomerang && (p.hitCooldown || 0) > 0) {
+            continue;
+          }
           if (player.smokeShieldTimer > 0) {
             this.emitDamageText(player.x, player.y - 25, '💨 DÝM Z FAJKY ODVRÁTIL ZÁSAH!', '#94A3B8', true);
             p.dead = true;
@@ -10156,13 +10222,25 @@ export class GameEngine {
             continue;
           }
           player.takeDamage(p.dmg ?? p.damage ?? 15, p.type || 'blunt');
+          if (p.pushback) {
+            const pushAng = Number.isFinite(p.angle) ? p.angle : Math.atan2(p.vy || 0, p.vx || 1);
+            player.x += Math.cos(pushAng) * p.pushback;
+            player.y += Math.sin(pushAng) * p.pushback;
+          }
           if (p.soakPlayer) {
             player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
           }
           if (p.slowPlayer) {
             player.slowTimer = 2.2 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
           }
-          p.dead = true;
+          if (p.statusText) {
+            this.emitDamageText(player.x, player.y - 40, p.statusText, p.statusColor || '#F59E0B', true);
+          }
+          if (p.boomerang) {
+            p.hitCooldown = 0.9;
+          } else {
+            p.dead = true;
+          }
         }
 
         // ADR 0052: Odraz perel od Hřbitovního plotu

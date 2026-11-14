@@ -27,6 +27,7 @@ import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virt
 import { getCachedHomingTarget } from './game/homing';
 import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './game/targeting';
 import { stepCrowForaging, restoreStolenBundleDrops } from './game/crowForaging';
+import { stepTacticalRegularAi } from './game/enemyAi';
 import { CosmeticRingPool } from './game/cosmeticRingPool';
 import { tryEmitParticle, tryEmitParticleBurst, getParticleLimit } from './game/particles';
 import { SpatialHash } from './game/spatialHash';
@@ -19104,6 +19105,60 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
+        // TACTICAL REGULAR ENEMIES (shared with GameEngine)
+        else if (
+          stepTacticalRegularAi(this, {
+            dt,
+            gameTime: engineRef.current.gameTime || 0,
+            activeLevelId: engineRef.current.activeLevelId ?? 0,
+            player,
+            spd,
+            dist: distToPlayer,
+            dir: dirToPlayer,
+            windupMult,
+            specialCdMult,
+            projectiles: engineRef.current.projectiles,
+            addHazard: (hazard: any) => {
+              const hazards = directorRef.current?.hazards;
+              if (!Array.isArray(hazards)) return false;
+              if (hazards.length >= 28) hazards.shift();
+              hazards.push(hazard);
+              if (
+                Array.isArray(engineRef.current.activeHazards) &&
+                engineRef.current.activeHazards !== hazards
+              ) {
+                engineRef.current.activeHazards.push(hazard);
+              }
+              return true;
+            },
+            emitText: (x: number, y: number, text: string, color: string, isCrit?: boolean) => {
+              pushDamageText(engineRef.current.texts, x, y, text, color, Boolean(isCrit));
+            },
+            playSound: (kind: string) => {
+              if (kind === 'freeze') sound.freeze();
+              else if (kind === 'splash') sound.splash();
+              else if (kind === 'roar') sound.roar();
+              else if (kind === 'hit') sound.hit();
+              else if (kind === 'curse') sound.potion();
+              else sound.slash();
+            },
+            emitParticle: (
+              x: number,
+              y: number,
+              vx: number,
+              vy: number,
+              color: string,
+              size: number,
+              life: number
+            ) => {
+              emitParticle(engineRef.current.particles, () => ({ x, y, vx, vy, color, size, life }));
+            },
+            decrementTimers: false,
+          })
+        ) {
+          // Handled by shared tactical regular-enemy AI
+        }
+
         // STANDARD HOMING FOR OTHER MOBS
         else {
           if (this.aiState === 'charge') {
@@ -19258,6 +19313,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Kamenný: +60% redukce poškození
         if (this.prefixDamageReduction) {
           amount *= (1 - this.prefixDamageReduction);
+        }
+
+        // Říční rak a Královský Vele-rak: Čelní krunýř odráží 75-80 % poškození
+        if ((this.id === 'rak_ricni' || this.id === 'kralovsky_vele_rak') && kbx !== 0) {
+          const facingVal = Math.abs(this.vx || 0) > 0.1 ? this.vx : (this.lastDx ?? 1);
+          const facing = facingVal < 0 ? -1 : 1;
+          const isFrontal = (facing > 0 && kbx < 0) || (facing < 0 && kbx > 0);
+          if (isFrontal) {
+            amount *= (this.id === 'kralovsky_vele_rak' ? 0.20 : 0.25);
+            pushDamageText(engineRef.current.texts, this.x, this.y - 25, 'KRUNÝŘ! 🛡️', '#0EA5E9', true);
+          }
         }
 
         const isLevelBoss = Boolean(this.isBoss);
